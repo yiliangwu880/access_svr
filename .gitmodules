@@ -1,0 +1,3 @@
+[submodule "external/libevent_cpp"]
+	path = external/libevent_cpp
+	url = https://github.com/yiliangwu880/libevent_cpp.git
