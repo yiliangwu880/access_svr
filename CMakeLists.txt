@@ -26,8 +26,8 @@ LINK_DIRECTORIES(
   ${CMAKE_SOURCE_DIR}/lib
 
   #项目引用第三方库
-  ${PROJECT_SOURCE_DIR}/mf_proto/lib
-  ${PROJECT_SOURCE_DIR}/mf_driver/lib
+  ${PROJECT_SOURCE_DIR}/acc_proto/lib
+  ${PROJECT_SOURCE_DIR}/acc_driver/lib
   ${PROJECT_SOURCE_DIR}/External/libevent_cpp/External/libevent-2.1.8-stable/out/lib
   ${PROJECT_SOURCE_DIR}/External/svr_util/lib
   ${PROJECT_SOURCE_DIR}/External/libevent_cpp/lib
@@ -55,11 +55,11 @@ endif( CMAKE_BUILD_TYPE STREQUAL "Debug" )
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 #SET(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 
-ADD_SUBDIRECTORY(mf_proto)
-ADD_SUBDIRECTORY(mf_svr)
-ADD_SUBDIRECTORY(mf_driver)
-ADD_SUBDIRECTORY(test)
-ADD_SUBDIRECTORY(samples)
+ADD_SUBDIRECTORY(acc_proto)
+#ADD_SUBDIRECTORY(acc_svr)
+#ADD_SUBDIRECTORY(acc_driver)
+#ADD_SUBDIRECTORY(test)
+#ADD_SUBDIRECTORY(samples)
 
 #自定义命令
 ##################################
