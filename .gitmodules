@@ -1,3 +1,6 @@
 [submodule "external/libevent_cpp"]
 	path = external/libevent_cpp
 	url = https://github.com/yiliangwu880/libevent_cpp.git
+[submodule "external/svr_util"]
+	path = external/svr_util
+	url = https://github.com/yiliangwu880/svr_util.git
