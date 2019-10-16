@@ -1,20 +1,25 @@
 /*
-tcp包: len, tcp_pack.
-tcp_pack:ctrl_len,ctrl_cmd, ctrl_pack，custom_pack.
---ctrl_len表示ctrl_cmd,ctrl_pack的总字节数。
---纯控制消息，就没有custom_pack了.
---custom_pack 用户自定义消息包，具体协议格式自定义，比如可以用protobuf。
-分二层解析
+协议：
+{
+	分三层图：
+									client             acc                svr
+	client和svr层：cmd,msg			  --------------------------------
+	client和acc层：cmd,msg			  -------------
+	acc和svr层:	is_ctrl,union_msg					  	  ----------------
 
-2） user和user层：custom_pack	--user 之间通讯的自定义协议
-
-1） user和mf层： tcp_pack  --user mf通讯协议，
-ctrl_cmd, ctrl_pack 解析出 mf::MsgData
-
-分层图：
-	user		  mf				user
-user和user层	-------------------	user和user层
-user和mf层	--- user和mf层	--	user和mf层
+	每层协议说明
+	client和svr层：cmd,msg
+	client和acc层：cmd,msg
+	{
+		cmd 消息号。 uint32, 通过高16位来实现路由到正确的svr,通常表达svr_id，有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id
+		msg 为自定义消息包，比如可以用protobuf。
+	}
+	acc和svr层:	cmd,msg
+	{
+		cmd acc和svr的消息号。
+		msg 自定义消息内容。比如转发消息就为cid, client和svr层：cmd,msg。其中cid为 client到acc的连接id
+	}
+}
 */
 
 #pragma once
@@ -23,16 +28,16 @@ user和mf层	--- user和mf层	--	user和mf层
 #include <string.h>
 
 #ifndef uint32
-typedef unsigned short uint16;
-typedef unsigned int uint32;
-typedef unsigned long long uint64;
-typedef long long int64;
-typedef unsigned char uint8;
-typedef int int32;
+using uint16 =unsigned short ;
+using uint32 = unsigned int ;
+using uint64 = unsigned long long ;
+using int64 = long long ;
+using uint8 = unsigned char ;
+using int32 = int ;
 #endif
 
 
-namespace mf {
+namespace acc {
 
 	//都用linux c++,先不限制字节对齐方式
 	//#pragma pack(push)
@@ -40,46 +45,63 @@ namespace mf {
 
 	//#pragma pack(pop)
 
-	struct MsgData
+	//acc和svr之间的控制消息
+	struct AccSvrMsg
 	{
-		MsgData()
+		uint16 cmd;
+		uint16 msg_len;  //msg字节数。
+		const char *msg;
+	};
+	struct ForwardMsg
+	{
+		uint64 cid; //其中cid为 client到acc的连接id
+		uint32 cmd;
+		uint16 msg_len;  //msg字节数。
+		const char *msg;
+	};
+	//acc和svr层消息解析
+	struct ASData
+	{
+		ASData()
 		{
-			memset(this, 0, sizeof(MsgData));
+			memset(this, 0, sizeof(ASData));
 		}
-		uint16 ctrl_len; //ctrl_len表示ctrl_cmd, ctrl_pack的总字节数。
-		uint16 ctrl_cmd;
-		uint16 ctrl_pack_len; //ctrl_pack 字节数
-		const char *ctrl_pack; //可以为空，表示无消息体
-		//用户自定义消息包
-		uint16 custom_len;  //custom_pack字节数。
-		const char *custom_pack;//可以为空，表示无消息体
-
+		///////////////////////////////////
+		uint16 cmd;		//acc,svr之间消息号
+		uint16 msg_len;  //msg字节数。
+		const char *msg;//自定义内容
+		//////////////////////////////
+		char is_ctrl;
+		union 
+		{
+			//is_ctrl == 1表示控制消息，union_msg为 acc和svr之间的控制消息。union_msg = ctrl_cmd, ctrl_msg
+			AccSvrMsg ctrl;
+			//is_ctrl == 0表示转发消息，union_msg为：acc.cid, cmd, msg。
+			ForwardMsg forward_msg;
+		}union_msg;
 	public:
 		//Parse tcp pack
-		//注意：MsgData 成员指向 tcp_pack的内存，tcp_pack释放后，MsgData的指针会野。
+		//注意：ASData 成员指向 tcp_pack的内存，tcp_pack释放后，ASData的指针会野。
 		//@para uint16 tcp_pack_len, 表示tcp_pack有效长度
-		//@para MsgData &msg_data, [out]
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
-
-		//@para[in] const MsgData &msg_data, 
+ 
 		//@para[out] std::string &tcp_pack
 		bool Serialize(std::string &tcp_pack) const;
-		//@para[out] uint16 tcp_pack_len, 表示 tcp_pack有效字节数。
+		//@para[in] uint16 tcp_pack_len, 表示 tcp_pack有效字节数。
 		//@para[out] char *tcp_pack
 		//注意：高效，容易越界
 		bool Serialize(char *tcp_pack, uint16 tcp_pack_len) const;
 
-		//一步打包成tcp_pack
+		//一步把 CtrlMsg打包成tcp_pack
 		template<class CtrlMsg>
-		static bool Serialize(uint16 ctrl_cmd, const CtrlMsg &ctrl_msg, const char *custom_pack, uint16 custom_len, std::string &tcp_pack)
+		static bool Serialize(uint16 ctrl_cmd, const CtrlMsg &ctrl_msg, std::string &tcp_pack)
 		{
-			MsgData msg_data;
-			msg_data.ctrl_len = sizeof(ctrl_cmd) + sizeof(ctrl_msg);
-			msg_data.ctrl_cmd = ctrl_cmd;
-			msg_data.ctrl_pack = (char *)&ctrl_msg;
-			msg_data.ctrl_pack_len = sizeof(ctrl_msg);
-			msg_data.custom_len = custom_len;
-			msg_data.custom_pack = custom_pack;
+			ASData msg_data;
+			msg_data.is_ctrl = 1;
+			auto &ctrl = msg_data.union_msg.ctrl;
+			ctrl.cmd = ctrl_cmd;
+			ctrl.msg = (char *)&ctrl_msg;
+			ctrl.msg_len = sizeof(ctrl_msg);
 
 			return msg_data.Serialize(tcp_pack);
 		}
@@ -90,80 +112,58 @@ namespace mf {
 	enum Cmd : uint16
 	{
 		CMD_NONE = 0,
-		CMD_NTF_COM,               //通用响应消息， MsgNtfCom
 
-		CMD_REQ_REG,		       //请求注册 	MsgReqReg, mf注册失败，不用反馈给客户端，mfsvr避免复杂度。 客户端自己定时检查注册失败
-		CMD_RSP_REG,				//MsgRspReg
+		CMD_REQ_REG,		            //MsgReqReg 请求注册 	
+		CMD_RSP_REG,				    //MsgRspReg
 
-		CMD_REQ_CON,			   //请求连接User MsgReqCon,
-		CMD_RSP_CON,			   //MsgRspCon
+		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
 
-		CMD_REQ_FORWARD,           //请求转发给User	MsgReqForward
+		CMD_NTF_FORWARD,		        //MsgNtfFoward ntf转发client消息包到svr
+		CMD_REQ_FORWARD,			    //MsgReqFoward 请求转发client消息包到client
 
-		CMD_NTF_DISCON,			   //通知User连接失败 MsgNtfDiscon. CMD_REQ_FORWARD请求失败也会导致这个响应。
+		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
 
-		CMD_REQ_BROADCAST,         //请求广播指定组 MsgReqBroadcast, mf原样发送到各个user
-	};
+		CMD_REQ_SET_MAIN_CMD,		    //MsgReqSetMainCmd 请求设置 main_cmd映射svr_id
 
-	struct MsgNtfCom
-	{
-		MsgNtfCom()
-			:req_cmd(CMD_NONE)
-			, tips_len(0)
-		{}
-		void Init(Cmd cmd, const char *t);
-		Cmd req_cmd; //被反馈的请求消息号
+		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
 
-		const char *Tips() const { return tips; }
-		bool Parse(const void* data, uint16 len);
-		void Serialize(std::string &out) const;
-	private:
-		uint16 tips_len;
-		char tips[200]; //提示
 	};
 
 	struct MsgReqReg
 	{
+		MsgReqReg()
+			:svr_id(0)
+			, is_verify(false)
+		{}
 		uint32 svr_id;
-		uint32 group_id;
+		bool is_verify; //true 表示 为验证服务器
+	};
+	struct MsgRspReg
+	{
+		uint32 svr_id; //失败返回 0 .
 	};
 
-	struct MsgNone
+	struct MsgReqVerifyRet
 	{
-		char n;
+		uint64 cid;
+		bool is_success;
 	};
 
-	struct MsgReqCon
+	struct MsgReqSetMainCmd
 	{
-		uint32 dst_id; //目标服务器id
-	};
-	struct MsgRspCon
-	{
-		bool is_ok;
-		uint32 dst_id; //目标服务器id
+		uint64 cid;
+		uint16 main_cmd;
+		uint16 svr_id;
 	};
 
-	struct MsgReqBroadcast
+	struct MsgReqDiscon
 	{
-		uint32 src_id;
-		uint32 group_id; //0表示广播全部
+		uint64 cid;
 	};
 
-	struct MsgReqForward
-	{
-		uint32 src_id;
-		uint32 dst_id;
-	};
-	struct MsgNtfDiscon
-	{
-		uint32 svr_id;
-	};
-
-
-	//user和mf层. ctrl_pack的编码解码。 就是MsgReqReg MsgReqForward 等
+	//acc和svr层. ctrl_msg的编码解码。 
 	namespace CtrlMsgProto
 	{
-
 		//ctrl msg pack通用解析
 		template<class CtrlMsg>
 		bool Parse(const void* data, uint16 len, CtrlMsg &msg)
@@ -177,9 +177,9 @@ namespace mf {
 		}
 
 		template<class CtrlMsg>
-		inline bool Parse(const MsgData &msg_data, CtrlMsg &msg_ctrl)
+		inline bool Parse(const AccSvrMsg &ctrl, CtrlMsg &msg_ctrl)
 		{
-			return Parse(msg_data.ctrl_pack, msg_data.ctrl_pack_len, msg_ctrl);
+			return Parse(ctrl.msg, ctrl.msg_len, msg_ctrl);
 		}
 
 		template<class CtrlMsg>
@@ -187,18 +187,6 @@ namespace mf {
 		{
 			out.clear();
 			out.append((char *)&msg, sizeof(msg));
-		}
-
-		//MsgNtfCom 特例
-		template<>
-		inline bool Parse(const void* data, uint16 len, MsgNtfCom &msg)
-		{
-			return msg.Parse(data, len);
-		}
-		template<>
-		inline	void Serialize(const MsgNtfCom &msg, std::string &out)
-		{
-			msg.Serialize(out);
 		}
 
 	}

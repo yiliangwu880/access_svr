@@ -2,7 +2,9 @@
 	client == 外网客户端，终端，比如手机app
 	acc  == access svr
 	svr  == 通过acc做转发，和client通讯服务器. 比如业务逻辑服务器，登录服务器, 排行榜服务等。
-	ad   == svr 端 acc driver, 驱动，作为库给svr调用。
+	ad   == acc driver, 驱动，作为库给svr调用。
+	Cmd  ==client和svr通讯的消息号
+	main_cmd,sub_cmd == Cmd 由 高16位叫main_cmd,低16位叫sub_cmd组成. main_cmd来实现路由到正确的svr,默认表达svr_id，有时候需要多个svr处理相同cmd,就需要main_cmd动态映射svr_id
 
 目的：
 {
@@ -25,12 +27,16 @@
 			svr 认证client,然后触发创建session. 认证超时失败。
 			svr 主动断开 所有session
 			保存登录用户ID或者登录的玩家id。 用来其中svr一个设定，然后广播给其他svr.
+			{
+				因为acc id在不同svr不一样（连接先后索引）。所以必须通过acc广播用户ID,svr才指定用户ID在那个acc
+			}
+			svr 请求设置 main_cmd映射svr_id
 		}
 		svr 连接注册。
 		最大连接client数,由svr(认证服务器)请求修改。
 		svr请求，设定心跳检查功能，心跳包信息{subcmd, interval, rsp msg}
 		svr异常断开，由svr设置是否需要关闭所有svr会话. 例如：由状态的游戏服异常，就关闭所有会话，但无状态的排行榜服异常，就不需要，等排行榜重启，就恢复排行榜所有会话。
-		
+		svr请求广播client,分全体和部分
 	}
 	
 	ad:
@@ -41,6 +47,7 @@
 		client 断开，session也断开。
 		svr 认证client,然后触发创建session.
 		svr 主动断开 所有session。
+		svr请求广播client,分全体和部分
 	}
 
 }
@@ -49,24 +56,22 @@
 {
 	分三层图：
 									client             acc                svr
-	client和svr层：svr_id,msg			  --------------------------------
-	client和acc层：svr_id,msg			  -------------
+	client和svr层：cmd,msg			  --------------------------------
+	client和acc层：cmd,msg			  -------------
 	acc和svr层:	is_ctrl,union_msg					  	  ----------------
 
 	每层协议说明
-	client和svr层：msg 				
+	client和svr层：cmd,msg 	
+	client和acc层：cmd,msg				
 	{
+		cmd 消息号。 
 		msg 为自定义消息包，比如可以用protobuf。
 	}
-	client和acc层：svr_id,msg		
+	
+	acc和svr层:	cmd,msg
 	{
-		msg == client和svr层：msg 
-		svr_id 为 svr 在acc注册的id,用来路由svr用。
-	}
-	acc和svr层:	is_ctrl,union_msg	
-	{
-		is_ctrl==1表示控制消息，union_msg为 acc和svr之间的控制消息。union_msg=ctrl_cmd,ctrl_msg
-		is_ctrl==0表示转发消息，union_msg为：acc.cid, msg。
+		cmd acc和svr的消息号。
+		msg 自定义消息内容。比如转发消息就为cid, client和svr层：cmd,msg。其中cid为 client到acc的连接id
 	}
 }
 
@@ -88,13 +93,15 @@ acc不需要id,避免配置麻烦。它的ip:port就是id
 				Verify, //验证通过
 			}
 			uint64 uin;//用户id
+			map<uint16, uint16> MainCmd2SvrId; //有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id. 比如MMORPG,多个场景进程。
 		}
 		struct SvrConnecter
 		{
 			uint16 svr_id;
 		}
 		map<svrid, SvrConnecter> Id2Svr;
-		Id2Svr id_2_svr;
+		Id2Svr id_2_svr;//管理 连接的svr
+		
 	}
 	
 	ad:

@@ -13,9 +13,9 @@ INCLUDE(cotire)
 
 # include directories
 INCLUDE_DIRECTORIES(system ./include/)
-INCLUDE_DIRECTORIES(system ./External/libevent_cpp/External/libevent-2.1.8-stable/out/include)
+INCLUDE_DIRECTORIES(system ./external/libevent_cpp/External/libevent-2.1.8-stable/out/include)
 INCLUDE_DIRECTORIES(after  ${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(after  ./External)
+INCLUDE_DIRECTORIES(after  ./external)
 
 #运行cmake输出终端消息，调试可以用
 message(PROJECT_SOURCE_DIR_is: ${PROJECT_SOURCE_DIR})
@@ -28,9 +28,9 @@ LINK_DIRECTORIES(
   #项目引用第三方库
   ${PROJECT_SOURCE_DIR}/acc_proto/lib
   ${PROJECT_SOURCE_DIR}/acc_driver/lib
-  ${PROJECT_SOURCE_DIR}/External/libevent_cpp/External/libevent-2.1.8-stable/out/lib
-  ${PROJECT_SOURCE_DIR}/External/svr_util/lib
-  ${PROJECT_SOURCE_DIR}/External/libevent_cpp/lib
+  ${PROJECT_SOURCE_DIR}/external/libevent_cpp/External/libevent-2.1.8-stable/out/lib
+  ${PROJECT_SOURCE_DIR}/external/svr_util/lib
+  ${PROJECT_SOURCE_DIR}/external/libevent_cpp/lib
 
   #系统目录
   /usr/local/lib
@@ -56,7 +56,7 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin)
 #SET(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/lib)
 
 ADD_SUBDIRECTORY(acc_proto)
-#ADD_SUBDIRECTORY(acc_svr)
+ADD_SUBDIRECTORY(acc_svr)
 #ADD_SUBDIRECTORY(acc_driver)
 #ADD_SUBDIRECTORY(test)
 #ADD_SUBDIRECTORY(samples)
@@ -65,7 +65,7 @@ ADD_SUBDIRECTORY(acc_proto)
 ##################################
 #ADD_CUSTOM_COMMAND(
 #	 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-#     COMMENT "cp mf_svr/cfg Debug/bin/ -rf"
+#     COMMENT "cp acc_svr/cfg Debug/bin/ -rf"
 #           )
 #
 ##################################
