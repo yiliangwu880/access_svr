@@ -10,21 +10,21 @@
 
 class SvrSvrCon;
 
-typedef void (*HandleMsg)(SvrSvrCon &con, const acc::AccSvrMsg &msg);
+typedef void (*HandleMsg)(SvrSvrCon &con, const acc::ASMsg &msg);
 class SvrCtrlMsgDispatch : public Singleton<SvrCtrlMsgDispatch>
 {
 public:
 	void Init();
-	void DispatchMsg(SvrSvrCon &con, const acc::AccSvrMsg &msg);
+	void DispatchMsg(SvrSvrCon &con, const acc::ASMsg &msg);
 
 private:
 	std::map<acc::Cmd, HandleMsg> m_cmd_2_handle;
 };
 
+using Id2Svr = std::map<uint16, SvrSvrCon*>;
 //管理已注册的SvrSvrCon
 class SvrRegMgr: public Singleton<SvrRegMgr>
 {
-	using Id2Svr =std::map<uint16, SvrSvrCon*>;
 public:
 	SvrRegMgr();
 	//轮询负载均衡一台验证服务器
@@ -35,6 +35,7 @@ public:
 
 	bool InsertVerify(SvrSvrCon *pSvr);
 	bool RemoveVerify(SvrSvrCon *pSvr);
+	const Id2Svr &GetRegSvr() const { return m_id_2_svr; };
 private:
 	Id2Svr m_id_2_svr;//svr_id 2 SvrSvrCon
 	std::set<SvrSvrCon*> m_verify_svr;
@@ -51,7 +52,9 @@ public:
 	uint32 GetSvrId() { return m_svr_id; }
 	void SetVerifySvr();
 	bool IsVerifySvr() const { return m_is_verify; }
-	bool Send(const acc::ASData &as_data);
+	//发送 acc::ASMsg
+	bool Send(const acc::ASMsg &as_data);
+	//发送 acc::ASMsg
 	template<class CtrlMsg>
 	bool Send(acc::Cmd cmd, const CtrlMsg &send);
 private:
@@ -71,8 +74,8 @@ template<class CtrlMsg>
 bool SvrSvrCon::Send(acc::Cmd cmd, const CtrlMsg &send)
 {
 	std::string tcp_pack;
-	acc::ASData::Serialize(cmd, send, tcp_pack);
+	acc::ASMsg::Serialize(cmd, send, tcp_pack);
 	lc::MsgPack msg_pack;
-	COND_F(msg_pack.Serialize(tcp_pack));
+	COND_F(msg_pack.Set(tcp_pack));
 	return SendData(msg_pack);
 }

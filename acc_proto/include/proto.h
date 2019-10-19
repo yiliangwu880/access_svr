@@ -11,7 +11,7 @@
 	client和svr层：cmd,msg
 	client和acc层：cmd,msg
 	{
-		cmd 消息号。 uint32, 通过高16位来实现路由到正确的svr,通常表达svr_id，有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id
+		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id
 		msg 为自定义消息包，比如可以用protobuf。
 	}
 	acc和svr层:	cmd,msg
@@ -39,46 +39,40 @@ using int32 = int ;
 
 namespace acc {
 
+	const static uint16 ASMSG_MAX_LEN = 1024 * 4; //4k
+	const static uint16 MAX_BROADCAST_CID_NUM = 400; //指定广播 cid最大数量
 	//都用linux c++,先不限制字节对齐方式
 	//#pragma pack(push)
 	//#pragma pack(1)
 
 	//#pragma pack(pop)
 
-	//acc和svr之间的控制消息
-	struct AccSvrMsg
-	{
-		uint16 cmd;
-		uint16 msg_len;  //msg字节数。
-		const char *msg;
-	};
+	
+	//acc和svr之间的消息内容之一
+	//当消息号为 CMD_NTF_FORWARD CMD_REQ_FORWARD时，消息体为ForwardMsg
 	struct ForwardMsg
 	{
-		uint64 cid; //其中cid为 client到acc的连接id
-		uint32 cmd;
+		uint64 cid;      //其中cid为 client到acc的连接id
+		uint32 cmd;      //client和svr层：cmd,msg
 		uint16 msg_len;  //msg字节数。
-		const char *msg;
+		const char *msg; //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
+
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
 	};
-	//acc和svr层消息解析
-	struct ASData
+
+	//acc和svr之间的消息
+	struct ASMsg
 	{
-		ASData()
-		{
-			memset(this, 0, sizeof(ASData));
-		}
-		///////////////////////////////////
 		uint16 cmd;		//acc,svr之间消息号
 		uint16 msg_len;  //msg字节数。
 		const char *msg;//自定义内容
-		//////////////////////////////
-		char is_ctrl;
-		union 
+
+		ASMsg()
 		{
-			//is_ctrl == 1表示控制消息，union_msg为 acc和svr之间的控制消息。union_msg = ctrl_cmd, ctrl_msg
-			AccSvrMsg ctrl;
-			//is_ctrl == 0表示转发消息，union_msg为：acc.cid, cmd, msg。
-			ForwardMsg forward_msg;
-		}union_msg;
+			memset(this, 0, sizeof(ASMsg));
+		}
 	public:
 		//Parse tcp pack
 		//注意：ASData 成员指向 tcp_pack的内存，tcp_pack释放后，ASData的指针会野。
@@ -92,19 +86,21 @@ namespace acc {
 		//注意：高效，容易越界
 		bool Serialize(char *tcp_pack, uint16 tcp_pack_len) const;
 
+		//CtrlMsg 必须为固定长度的类型
 		//一步把 CtrlMsg打包成tcp_pack
 		template<class CtrlMsg>
 		static bool Serialize(uint16 ctrl_cmd, const CtrlMsg &ctrl_msg, std::string &tcp_pack)
 		{
-			ASData msg_data;
-			msg_data.is_ctrl = 1;
-			auto &ctrl = msg_data.union_msg.ctrl;
-			ctrl.cmd = ctrl_cmd;
-			ctrl.msg = (char *)&ctrl_msg;
-			ctrl.msg_len = sizeof(ctrl_msg);
+			ASMsg msg_data;
+			msg_data.cmd = ctrl_cmd;
+			msg_data.msg_len = sizeof(ctrl_msg);
+			msg_data.msg = (char *)&ctrl_msg;
 
 			return msg_data.Serialize(tcp_pack);
 		}
+
+		//@tcp_pack [out]  ASMsg对应的序列化字符串
+		static bool Serialize(uint16 ctrl_cmd, const ForwardMsg &forward_msg, std::string &tcp_pack);
 	};
 
 
@@ -118,15 +114,38 @@ namespace acc {
 
 		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
 
-		CMD_NTF_FORWARD,		        //MsgNtfFoward ntf转发client消息包到svr
-		CMD_REQ_FORWARD,			    //MsgReqFoward 请求转发client消息包到client
+		CMD_NTF_FORWARD,		        //ForwardMsg ntf转发client消息包到svr
+		CMD_REQ_FORWARD,			    //ForwardMsg 请求转发client消息包到client
 
 		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
 
 		CMD_REQ_SET_MAIN_CMD,		    //MsgReqSetMainCmd 请求设置 main_cmd映射svr_id
 
 		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
+		CMD_REQ_DISCON_ALL,				// 请求acc断开所有client， 
 
+		CMD_NTF_DISCON,					//MsgNtfDiscon 通知client已断开了
+
+	};
+
+	struct MsgNtfDiscon
+	{
+		uint64 cid;
+	};
+
+
+	struct MsgReqBroadCast
+	{
+
+		uint16 cid_len;		//cid数量
+		uint64 *cid_s;      //cid列表
+		uint32 cmd;			//client和svr层：cmd,msg
+		uint16 msg_len;     //msg字节数。
+		const char *msg;    //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
+
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
 	};
 
 	struct MsgReqReg
@@ -177,9 +196,9 @@ namespace acc {
 		}
 
 		template<class CtrlMsg>
-		inline bool Parse(const AccSvrMsg &ctrl, CtrlMsg &msg_ctrl)
+		inline bool Parse(const ASMsg &as_msg, CtrlMsg &msg_ctrl)
 		{
-			return Parse(ctrl.msg, ctrl.msg_len, msg_ctrl);
+			return Parse(as_msg.msg, as_msg.msg_len, msg_ctrl);
 		}
 
 		template<class CtrlMsg>

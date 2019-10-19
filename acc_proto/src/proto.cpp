@@ -19,7 +19,7 @@ namespace
 	}  
 }
 
-bool acc::ASData::Parse(const char *tcp_pack, uint16 tcp_pack_len)
+bool acc::ASMsg::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 {
 	if (0 == tcp_pack_len || nullptr == tcp_pack)
 	{
@@ -32,112 +32,164 @@ bool acc::ASData::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 	const char *cur = tcp_pack; //读取指针
 	msg_len = tcp_pack_len - sizeof(cmd);
 	ParseCp(cmd, cur);
-	msg = cur;
-	return  true;
-
-	////////////////////////
-	ParseCp(is_ctrl, cur);
-
-	if (is_ctrl > 1)
+	msg = cur;		
+	if (0 == msg_len)
+	{
+		msg = nullptr;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
 	{
 		return false;
 	}
-	if (1 == is_ctrl)
-	{
-		//is_ctrl == 1表示控制消息，union_msg为 acc和svr之间的控制消息。union_msg = ctrl_cmd, ctrl_msg
-		auto &ctrl = union_msg.ctrl;
-		ParseCp(ctrl.cmd, cur);
-		ctrl.msg = cur;
-		ctrl.msg_len = tcp_pack_len - sizeof(is_ctrl) - sizeof(ctrl.cmd);
-		if (0 == ctrl.msg_len)
-		{
-			ctrl.msg = nullptr;
-		}
-	} 
-	else
-	{
-		//is_ctrl == 0表示转发消息，union_msg为：acc.cid, cmd, msg。
-		auto &forward_msg = union_msg.forward_msg;
-		ParseCp(forward_msg.cid, cur);
-		ParseCp(forward_msg.cmd, cur);
-		forward_msg.msg = cur;
-		forward_msg.msg_len = tcp_pack_len - sizeof(is_ctrl) - sizeof(forward_msg.cid) - sizeof(forward_msg.cmd);
-		if (0 == forward_msg.msg_len)
-		{
-			forward_msg.msg = nullptr;
-		}
-	}
-	return true;
+	return  true;
 }
 
-bool acc::ASData::Serialize(std::string &tcp_pack) const
+bool acc::ASMsg::Serialize(std::string &tcp_pack) const
 {
+	if (cmd == 0)
+	{
+		return false;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
 	tcp_pack.clear();
-	tcp_pack.append((const char *)&is_ctrl, sizeof(is_ctrl));
-	if (1 == is_ctrl)
+	tcp_pack.append((const char *)&cmd, sizeof(cmd));
+	if (nullptr != msg)
 	{
-		auto &ctrl = union_msg.ctrl;
-		if (ctrl.cmd == 0)
-		{
-			return false;
-		}
-		tcp_pack.append((const char *)&ctrl.cmd, sizeof(ctrl.cmd)); 
-		if (nullptr != ctrl.msg)
-		{
-			tcp_pack.append(ctrl.msg, ctrl.msg_len);
-		}
-	}
-	else
-	{	//is_ctrl == 0表示转发消息，union_msg为：acc.cid, cmd, msg。
-		auto &forward_msg = union_msg.forward_msg;
-		if (forward_msg.cmd == 0)
-		{
-			return false;
-		}
-		tcp_pack.append((const char *)&forward_msg.cid, sizeof(forward_msg.cid));
-		tcp_pack.append((const char *)&forward_msg.cmd, sizeof(forward_msg.cmd));
-		if (nullptr != forward_msg.msg)
-		{
-			tcp_pack.append(forward_msg.msg, forward_msg.msg_len);
-		}
+		tcp_pack.append(msg, msg_len);
 	}
 	return true;
 }
 
-bool acc::ASData::Serialize(char *tcp_pack, uint16 tcp_pack_len) const
+bool acc::ASMsg::Serialize(uint16 ctrl_cmd, const ForwardMsg &f_msg, std::string &tcp_pack)
 {
-	char *cur = tcp_pack;
-	SerializeCp(is_ctrl, cur);
-	if (1 == is_ctrl)
+	if (ctrl_cmd == 0)
 	{
-		auto &ctrl = union_msg.ctrl;
-		if (ctrl.cmd == 0)
-		{
-			return false;
-		}
-		SerializeCp(ctrl.cmd, cur);
-		if (nullptr != ctrl.msg)
-		{
-			memcpy(cur, ctrl.msg, ctrl.msg_len);
-			cur += ctrl.msg_len;
-		}
+		return false;
 	}
-	else
-	{	//is_ctrl == 0表示转发消息，union_msg为：acc.cid, cmd, msg。
-		auto &forward_msg = union_msg.forward_msg;
-		if (forward_msg.cmd == 0)
-		{
-			return false;
-		}
-		SerializeCp(forward_msg.cid, cur);
-		SerializeCp(forward_msg.cmd, cur);
-		if (nullptr != forward_msg.msg)
-		{
-			memcpy(cur, forward_msg.msg, forward_msg.msg_len);
-			cur += forward_msg.msg_len;
-		}
+
+	tcp_pack.clear();
+	//serialize ASMsg cmg
+	tcp_pack.append((const char *)&ctrl_cmd, sizeof(ctrl_cmd));
+
+	//serialize ASMsg msg
+	return f_msg.Serialize(tcp_pack);
+}
+
+bool acc::ASMsg::Serialize(char *tcp_pack, uint16 tcp_pack_len) const
+{
+	if (cmd == 0)
+	{
+		return false;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
+	char *cur = tcp_pack;
+	SerializeCp(cmd, cur);
+	if (nullptr != msg)
+	{
+		memcpy(cur, msg, msg_len);
 	}
 	return true;
 }
 
 
+bool acc::ForwardMsg::Parse(const char *tcp_pack, uint16 tcp_pack_len)
+{
+	if (0 == tcp_pack_len || nullptr == tcp_pack)
+	{
+		return false;
+	}
+	if (tcp_pack_len < sizeof(cmd))
+	{
+		return false;
+	}
+	const char *cur = tcp_pack; //读取指针
+
+	ParseCp(cid, cur);
+	ParseCp(cmd, cur);
+	ParseCp(msg_len, cur);
+	msg = cur;
+	if (0 == msg_len)
+	{
+		msg = nullptr;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
+	return  true;
+}
+
+bool acc::ForwardMsg::Serialize(std::string &tcp_pack) const
+{
+	if (cmd == 0)
+	{
+		return false;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
+	tcp_pack.append((const char *)&cid, sizeof(cid));
+	tcp_pack.append((const char *)&cmd, sizeof(cmd));
+	tcp_pack.append((const char *)&msg_len, sizeof(msg_len));
+	tcp_pack.append(msg, msg_len);
+	return true;
+}
+
+bool acc::MsgReqBroadCast::Parse(const char *tcp_pack, uint16 tcp_pack_len)
+{
+	if (0 == tcp_pack_len || nullptr == tcp_pack)
+	{
+		return false;
+	}
+
+	const char *cur = tcp_pack; //读取指针
+
+	ParseCp(cid_len, cur);
+	if (0 == cid_len)
+	{
+		cid_s = nullptr;
+	}
+	else
+	{
+		cid_s = (decltype(cid_s))cur;
+		cur += cid_len * sizeof(uint64);
+	}
+
+	ParseCp(cmd, cur);
+	ParseCp(msg_len, cur);
+	msg = cur;
+	if (0 == msg_len)
+	{
+		msg = nullptr;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
+	return  true;
+}
+
+bool acc::MsgReqBroadCast::Serialize(std::string &tcp_pack) const
+{
+	if (cmd == 0)
+	{
+		return false;
+	}
+	if (msg_len >= ASMSG_MAX_LEN)
+	{
+		return false;
+	}
+	tcp_pack.append((const char *)&cid_len, sizeof(cid_len));
+	tcp_pack.append((const char *)cid_s, cid_len * sizeof(uint64));
+	tcp_pack.append((const char *)&cmd, sizeof(cmd));
+	tcp_pack.append((const char *)&msg_len, sizeof(msg_len));
+	tcp_pack.append(msg, msg_len);
+	return true;
+}

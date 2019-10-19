@@ -13,6 +13,14 @@
 	转发快。后面提到的2个时间快。 接收client数据. 从acc接收io  到 svr接收io的时间。  发送给client数据， 从svr发送io 到 acc 发送io的时间.
 }
 
+限制： 规定死了client 和svr 消息包规则，如下
+{
+	client和svr层：cmd,msg
+	{
+		cmd 消息号。 uint32, 通过高16位叫main_cmd, 来实现路由到正确的svr。
+		msg 为自定义消息包，比如可以用protobuf。
+	}
+}
 
 功能：
 {
@@ -24,12 +32,8 @@
 			创建 client 和 svr的session.
 			svr 主动断开session
 			client 断开，session也断开。
-			svr 认证client,然后触发创建session. 认证超时失败。
-			svr 主动断开 所有session
-			保存登录用户ID或者登录的玩家id。 用来其中svr一个设定，然后广播给其他svr.
-			{
-				因为acc id在不同svr不一样（连接先后索引）。所以必须通过acc广播用户ID,svr才指定用户ID在那个acc
-			}
+			svr 认证client,然后触发创建session. 等svr认证超时,断开
+			svr 主动断开 所有session, 通常svr重启用。
 			svr 请求设置 main_cmd映射svr_id
 		}
 		svr 连接注册。
@@ -37,6 +41,7 @@
 		svr请求，设定心跳检查功能，心跳包信息{subcmd, interval, rsp msg}
 		svr异常断开，由svr设置是否需要关闭所有svr会话. 例如：由状态的游戏服异常，就关闭所有会话，但无状态的排行榜服异常，就不需要，等排行榜重启，就恢复排行榜所有会话。
 		svr请求广播client,分全体和部分
+		不保存用户id uin, 需要广播用cid识别。 查找uin对应那个Session，时svr群之间的事情。
 	}
 	
 	ad:
@@ -61,13 +66,12 @@
 	acc和svr层:	is_ctrl,union_msg					  	  ----------------
 
 	每层协议说明
-	client和svr层：cmd,msg 	
-	client和acc层：cmd,msg				
+	client和svr层：cmd,msg
+	client和acc层：cmd,msg
 	{
-		cmd 消息号。 
+		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个无状态svr处理相同cmd,就需要cmd动态映射svr_id
 		msg 为自定义消息包，比如可以用protobuf。
 	}
-	
 	acc和svr层:	cmd,msg
 	{
 		cmd acc和svr的消息号。
@@ -92,16 +96,15 @@ acc不需要id,避免配置麻烦。它的ip:port就是id
 				Wait_Verify, //已收到第一条消息，转发给svr, 等验证结果。
 				Verify, //验证通过
 			}
-			uint64 uin;//用户id
 			map<uint16, uint16> MainCmd2SvrId; //有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id. 比如MMORPG,多个场景进程。
 		}
+		
 		struct SvrConnecter
 		{
 			uint16 svr_id;
 		}
 		map<svrid, SvrConnecter> Id2Svr;
 		Id2Svr id_2_svr;//管理 连接的svr
-		
 	}
 	
 	ad:
@@ -113,10 +116,17 @@ acc不需要id,避免配置麻烦。它的ip:port就是id
 		struct Session{
 			SessionId id;
 			addr;
-			uint64 uin;//用户id
 		}
 		using unordered_map<SessionId, Session> Id2Session;
 		vector<Id2Session> all_sessions;
 	}
+
+}
+
+测试用例：
+{
+	演示 账号登录，选择角色，进入游戏， 切换角色
+	mmorpg跨场景演示
+	棋牌 多个大厅。
 
 }

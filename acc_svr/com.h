@@ -10,7 +10,6 @@
 class Com
 {
 public:
-	static bool ASData2MsgPack(const acc::ASData &as_data, lc::MsgPack &msg_pack);
-
+	//static bool ASData2MsgPack(const acc::ASMsg &as_data, lc::MsgPack &msg_pack);
 };
 
