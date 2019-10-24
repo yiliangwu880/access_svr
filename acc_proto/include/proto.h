@@ -5,19 +5,19 @@
 									client             acc                svr
 	client和svr层：cmd,msg			  --------------------------------
 	client和acc层：cmd,msg			  -------------
-	acc和svr层:	is_ctrl,union_msg					  	  ----------------
+	acc和svr层:	as_cmd,as_msg					  			----------------
 
 	每层协议说明
 	client和svr层：cmd,msg
 	client和acc层：cmd,msg
 	{
-		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id
+		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个svr处理相同cmd,就需要main_cmd动态映射svr_id
 		msg 为自定义消息包，比如可以用protobuf。
 	}
-	acc和svr层:	cmd,msg
+	acc和svr层:	as_cmd,as_msg
 	{
-		cmd acc和svr的消息号。
-		msg 自定义消息内容。比如转发消息就为cid, client和svr层：cmd,msg。其中cid为 client到acc的连接id
+		as_cmd acc和svr的消息号。
+		as_msg 消息体。比如转发消息就为【cid,cmd,msg】。其中cid为 client到acc的连接id
 	}
 }
 */
@@ -49,12 +49,12 @@ namespace acc {
 
 	
 	//acc和svr之间的消息内容之一
-	//当消息号为 CMD_NTF_FORWARD CMD_REQ_FORWARD时，消息体为ForwardMsg
-	struct ForwardMsg
+	//当消息号为 CMD_NTF_FORWARD CMD_REQ_FORWARD时，消息体为MsgForward
+	struct MsgForward
 	{
 		uint64 cid;      //其中cid为 client到acc的连接id
 		uint32 cmd;      //client和svr层：cmd,msg
-		uint16 msg_len;  //msg字节数。
+		uint16 msg_len;  //msg字节数。网络包不包含这个内容
 		const char *msg; //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
 
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
@@ -62,16 +62,45 @@ namespace acc {
 		bool Serialize(std::string &tcp_pack) const;
 	};
 
+
+	//控制消息定义
+	enum Cmd : uint16
+	{
+		CMD_NONE = 0,
+
+		CMD_REQ_REG,		            //MsgReqReg 请求注册 	
+		CMD_RSP_REG,				    //MsgRspReg
+
+		CMD_REQ_SET_HEARTBEAT_INFO,		//MsgReqSetHeartbeatInfo 设置心跳功能，可选用
+
+		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
+
+		CMD_NTF_FORWARD,		        //MsgForward ntf转发client消息包到svr
+		CMD_REQ_FORWARD,			    //MsgForward 请求转发client消息包到client
+
+		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
+											
+		CMD_REQ_SET_MAIN_CMD_2_SVR,		//MsgReqSetMainCmd2Svr 请求设置 main_cmd映射svr_id.
+										// (为了确保client明确知道发送消息到那个svr_id,映射设置需要client发起请求，设置成功通知客户端)
+		CMD_RSP_SET_MAIN_CMD_2_SVR,		//MsgRspSetMainCmd2Svr
+
+		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
+		CMD_REQ_DISCON_ALL,				//请求acc断开所有client， 
+
+		CMD_NTF_DISCON,					//MsgNtfDiscon 通知client已断开了
+
+	};
+
 	//acc和svr之间的消息
 	struct ASMsg
 	{
-		uint16 cmd;		//acc,svr之间消息号
+		Cmd cmd;		//acc,svr之间消息号
 		uint16 msg_len;  //msg字节数。
 		const char *msg;//自定义内容
 
 		ASMsg()
 		{
-			memset(this, 0, sizeof(ASMsg));
+			memset(this, 0, sizeof(*this));
 		}
 	public:
 		//Parse tcp pack
@@ -84,12 +113,12 @@ namespace acc {
 		//@para[in] uint16 tcp_pack_len, 表示 tcp_pack有效字节数。
 		//@para[out] char *tcp_pack
 		//注意：高效，容易越界
-		bool Serialize(char *tcp_pack, uint16 tcp_pack_len) const;
+		//bool Serialize(char *tcp_pack, uint16 tcp_pack_len) const;
 
 		//CtrlMsg 必须为固定长度的类型
-		//一步把 CtrlMsg打包成tcp_pack
+		//一步把ctrl_cmd ctrl_msg打包成 ASMsg 的tcp_pack
 		template<class CtrlMsg>
-		static bool Serialize(uint16 ctrl_cmd, const CtrlMsg &ctrl_msg, std::string &tcp_pack)
+		static bool Serialize(Cmd ctrl_cmd, const CtrlMsg &ctrl_msg, std::string &tcp_pack)
 		{
 			ASMsg msg_data;
 			msg_data.cmd = ctrl_cmd;
@@ -100,43 +129,26 @@ namespace acc {
 		}
 
 		//@tcp_pack [out]  ASMsg对应的序列化字符串
-		static bool Serialize(uint16 ctrl_cmd, const ForwardMsg &forward_msg, std::string &tcp_pack);
+		static bool Serialize(Cmd ctrl_cmd, const MsgForward &forward_msg, std::string &tcp_pack);
 	};
 
 
-	//控制消息定义
-	enum Cmd : uint16
-	{
-		CMD_NONE = 0,
-
-		CMD_REQ_REG,		            //MsgReqReg 请求注册 	
-		CMD_RSP_REG,				    //MsgRspReg
-
-		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
-
-		CMD_NTF_FORWARD,		        //ForwardMsg ntf转发client消息包到svr
-		CMD_REQ_FORWARD,			    //ForwardMsg 请求转发client消息包到client
-
-		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
-
-		CMD_REQ_SET_MAIN_CMD,		    //MsgReqSetMainCmd 请求设置 main_cmd映射svr_id
-
-		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
-		CMD_REQ_DISCON_ALL,				// 请求acc断开所有client， 
-
-		CMD_NTF_DISCON,					//MsgNtfDiscon 通知client已断开了
-
-	};
 
 	struct MsgNtfDiscon
 	{
 		uint64 cid;
 	};
 
+	//	svr请求，设定心跳检查功能，心跳包信息{cmd, interval, rsp cmd}
+	struct  MsgReqSetHeartbeatInfo
+	{
+		uint32 cmd;		//客户端请求消息号
+		uint32 rsp_cmd; //响应给客户端额消息号
+		uint64 interval_sec;
+	};
 
 	struct MsgReqBroadCast
 	{
-
 		uint16 cid_len;		//cid数量
 		uint64 *cid_s;      //cid列表
 		uint32 cmd;			//client和svr层：cmd,msg
@@ -157,6 +169,7 @@ namespace acc {
 		uint32 svr_id;
 		bool is_verify; //true 表示 为验证服务器
 	};
+
 	struct MsgRspReg
 	{
 		uint32 svr_id; //失败返回 0 .
@@ -168,7 +181,14 @@ namespace acc {
 		bool is_success;
 	};
 
-	struct MsgReqSetMainCmd
+	struct MsgReqSetMainCmd2Svr
+	{
+		uint64 cid;
+		uint16 main_cmd;
+		uint16 svr_id;
+	};
+
+	struct MsgRspSetMainCmd2Svr
 	{
 		uint64 cid;
 		uint16 main_cmd;
@@ -201,12 +221,12 @@ namespace acc {
 			return Parse(as_msg.msg, as_msg.msg_len, msg_ctrl);
 		}
 
-		template<class CtrlMsg>
-		inline void Serialize(const CtrlMsg &msg, std::string &out)
-		{
-			out.clear();
-			out.append((char *)&msg, sizeof(msg));
-		}
+		//template<class CtrlMsg>
+		//inline void Serialize(const CtrlMsg &msg, std::string &out)
+		//{
+		//	out.clear();
+		//	out.append((char *)&msg, sizeof(msg));
+		//}
 
 	}
 

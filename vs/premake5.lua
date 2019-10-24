@@ -41,17 +41,17 @@ Project "acc_proto"
 	"../acc_proto/*.txt",
 	}
 	
--- Project "acc_driver"
-	-- IncludeFile { 
-		-- "../external/svr_util/include/",
-	-- }
+Project "acc_driver"
+	IncludeFile { 
+		"../external/svr_util/include/",
+	}
 
-	-- SrcPath { 
-		-- "../mf_driver/**",  
-	-- }	
-	-- files {
-	-- "../mf_driver/*.txt",
-	-- }
+	SrcPath { 
+		"../acc_driver/**",  
+	}	
+	files {
+	"../acc_driver/*.txt",
+	}
 	
 -- Project "samples"
 	-- includedirs { 

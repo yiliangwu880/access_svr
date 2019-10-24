@@ -70,7 +70,6 @@ int main(int argc, char* argv[])
 	}
 
 	lc::EventMgr::Obj().Dispatch();
-
 	return 0;
 }
 

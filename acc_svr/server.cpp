@@ -17,11 +17,11 @@ bool Server::Init()
 	return true;
 }
 
-ClientSvrCon * Server::FindClientSvrCon(uint64 cid)
+ExternalSvrCon * Server::FindClientSvrCon(uint64 cid)
 {
 	BaseConMgr &conMgr = m_client_listener.GetConnMgr();
 	SvrCon *pClient = conMgr.FindConn(cid);
-	ClientSvrCon *p = dynamic_cast<ClientSvrCon *>(pClient);
+	ExternalSvrCon *p = dynamic_cast<ExternalSvrCon *>(pClient);
 	if (nullptr == p)
 	{
 		L_DEBUG("find ClientSvrCon fail. cid=%lld", cid);
@@ -31,6 +31,7 @@ ClientSvrCon * Server::FindClientSvrCon(uint64 cid)
 
 CfgMgr::CfgMgr()
 	:m_inner_port(0)
+	, m_ex_port(0)
 	, is_daemon(false)
 {
 

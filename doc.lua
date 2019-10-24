@@ -13,10 +13,11 @@
 	转发快。后面提到的2个时间快。 接收client数据. 从acc接收io  到 svr接收io的时间。  发送给client数据， 从svr发送io 到 acc 发送io的时间.
 }
 
-限制： 规定死了client 和svr 消息包规则，如下
+限制： 规定了client 和svr 消息包规则，如下
 {
-	client和svr层：cmd,msg
+	client和svr层：len, cmd,msg
 	{
+		len cmd+msg字节数
 		cmd 消息号。 uint32, 通过高16位叫main_cmd, 来实现路由到正确的svr。
 		msg 为自定义消息包，比如可以用protobuf。
 	}
@@ -38,21 +39,25 @@
 		}
 		svr 连接注册。
 		最大连接client数,由svr(认证服务器)请求修改。
-		svr请求，设定心跳检查功能，心跳包信息{subcmd, interval, rsp msg}
-		svr异常断开，由svr设置是否需要关闭所有svr会话. 例如：由状态的游戏服异常，就关闭所有会话，但无状态的排行榜服异常，就不需要，等排行榜重启，就恢复排行榜所有会话。
+		svr请求，设定心跳检查功能，心跳包信息{cmd, interval, rsp msg}
 		svr请求广播client,分全体和部分
 		不保存用户id uin, 需要广播用cid识别。 查找uin对应那个Session，时svr群之间的事情。
 	}
 	
 	ad:
 	{
-		请求注册
-		创建 client 和 svr的session.
+		请求注册。全部连接acc注册成功才算成功。失败断开。
+		创建 client 和 svr的session. 认证的session,首次从acc到svr，就创建。
 		svr 主动断开session
 		client 断开，session也断开。
 		svr 认证client,然后触发创建session.
 		svr 主动断开 所有session。
 		svr请求广播client,分全体和部分
+		断线重连。 重连走注册流程。
+		设置心跳功能
+		需要先请求验证结果
+		接收转发client和svr层消息
+		请求设置 main_cmd映射svr_id
 	}
 
 }
@@ -63,19 +68,19 @@
 									client             acc                svr
 	client和svr层：cmd,msg			  --------------------------------
 	client和acc层：cmd,msg			  -------------
-	acc和svr层:	is_ctrl,union_msg					  	  ----------------
+	acc和svr层:	as_cmd,as_msg					  			----------------
 
 	每层协议说明
 	client和svr层：cmd,msg
 	client和acc层：cmd,msg
 	{
-		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个无状态svr处理相同cmd,就需要cmd动态映射svr_id
+		cmd 消息号。 uint32, 通过高16位为main_cmd， 来实现路由到正确的svr。 main_cmd通常表达svr_id，有时候需要多个svr处理相同cmd,就需要main_cmd动态映射svr_id
 		msg 为自定义消息包，比如可以用protobuf。
 	}
-	acc和svr层:	cmd,msg
+	acc和svr层:	as_cmd,as_msg
 	{
-		cmd acc和svr的消息号。
-		msg 自定义消息内容。比如转发消息就为cid, client和svr层：cmd,msg。其中cid为 client到acc的连接id
+		as_cmd acc和svr的消息号。
+		as_msg 消息体。比如转发消息就为【cid,cmd,msg】。其中cid为 client到acc的连接id
 	}
 }
 
@@ -109,16 +114,21 @@ acc不需要id,避免配置麻烦。它的ip:port就是id
 	
 	ad:
 	{
-		struct SessionId{
+		using unordered_map<SessionId, Session> Id2Session;
+		struct SessionId
+		{
 			uint64 cid; //acc的connect id
-			uint32 idx; //all_sessions index,也是单个svr内的acc id
+			uint32 idx; //也是单个svr内的acc id
 		}
 		struct Session{
 			SessionId id;
 			addr;
 		}
-		using unordered_map<SessionId, Session> Id2Session;
-		vector<Id2Session> all_sessions;
+		struct AccCon{
+			..//连接accs
+			Id2Session m_id_2_s;
+		} 
+		vector<AccCon> all_acc_con;
 	}
 
 }

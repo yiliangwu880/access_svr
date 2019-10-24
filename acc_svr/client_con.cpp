@@ -6,28 +6,29 @@ using namespace std;
 using namespace acc;
 using namespace lc;
 
-ClientSvrCon::ClientSvrCon()
+ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 {
 }
 
-ClientSvrCon::~ClientSvrCon()
+ExternalSvrCon::~ExternalSvrCon()
 {
 	if (IsVerify())
 	{
 		MsgNtfDiscon ntf;
 		ntf.cid = GetId();
 		L_ASSERT(ntf.cid);
-		const Id2Svr &id_2_svr = SvrRegMgr::Obj().GetRegSvr();
+		const Id2Svr &id_2_svr = RegSvrMgr::Obj().GetRegSvr();
 		for (auto &v: id_2_svr)
 		{
-			SvrSvrCon *p = v.second;
+			InnerSvrCon *p = v.second;
+			L_COND(p);
 			p->Send(CMD_NTF_DISCON, ntf);
 		}
 	}
 }
 
-void ClientSvrCon::SetVerify(bool is_success)
+void ExternalSvrCon::SetVerify(bool is_success)
 {
 	if (m_state != State::WAIT_VERIFY)
 	{
@@ -46,12 +47,12 @@ void ClientSvrCon::SetVerify(bool is_success)
 	m_verify_tm.StopTimer();
 }
 
-bool ClientSvrCon::IsVerify()
+bool ExternalSvrCon::IsVerify()
 {
 	return State::VERIFYED == m_state;
 }
 
-bool ClientSvrCon::SendMsg(uint32 cmd, const char *msg, uint16 msg_len)
+bool ExternalSvrCon::SendMsg(uint32 cmd, const char *msg, uint16 msg_len)
 {
 	string s;
 	s.append((char *)&cmd, sizeof(cmd));
@@ -59,34 +60,35 @@ bool ClientSvrCon::SendMsg(uint32 cmd, const char *msg, uint16 msg_len)
 	return SendPack(s.c_str(), s.length());
 }
 
-void ClientSvrCon::SetMainCmd2SvrId(uint16 main_cmd, uint16 svr_id)
+void ExternalSvrCon::SetMainCmd2SvrId(uint16 main_cmd, uint16 svr_id)
 {
+	L_COND(0 != main_cmd);
+	L_COND(0 != svr_id);
 	m_cmd_2_svrid[main_cmd] = svr_id;
 }
 
-void ClientSvrCon::OnRecv(const lc::MsgPack &msg)
+void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 {
 	switch (m_state)
 	{
 	default:
 		L_ERROR("unknow state %d", (int)m_state);
 		break;
-	case ClientSvrCon::State::INIT:
+	case ExternalSvrCon::State::INIT:
 		Forward2VerifySvr(msg);
 		break;
-	case ClientSvrCon::State::WAIT_VERIFY:
-		L_WARN("client repeated req verify");
-		DisConnect();
+	case ExternalSvrCon::State::WAIT_VERIFY:
+		L_WARN("client repeated req verify, ignore");
 		break;
-	case ClientSvrCon::State::VERIFYED:
+	case ExternalSvrCon::State::VERIFYED:
 		Forward2Svr(msg);
 		break;
 	}
 	return;
 }
 
-//client 接收的tcp pack 转 ForwardMsg
-bool ClientSvrCon::ClientTcpPack2ForwardMsg(const lc::MsgPack &msg, ForwardMsg &f_msg) const
+//client 接收的tcp pack 转 MsgForward
+bool ExternalSvrCon::ClientTcpPack2MsgForward(const lc::MsgPack &msg, MsgForward &f_msg) const
 {
 	L_COND_F(msg.len>=sizeof(f_msg.cmd));
 	f_msg.cid = GetId();
@@ -97,14 +99,14 @@ bool ClientSvrCon::ClientTcpPack2ForwardMsg(const lc::MsgPack &msg, ForwardMsg &
 	return true;
 }
 
-void ClientSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
+void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 {
 	L_COND(State::INIT == m_state);
 
 	string tcp_pack;
 	{//client tcp pack to ASData tcp pack 
-		ForwardMsg f_msg;
-		if (!ClientTcpPack2ForwardMsg(msg, f_msg))
+		MsgForward f_msg;
+		if (!ClientTcpPack2MsgForward(msg, f_msg))
 		{
 			L_WARN("client illegal msg");
 			return;
@@ -112,37 +114,51 @@ void ClientSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 		L_COND(ASMsg::Serialize(CMD_NTF_FORWARD, f_msg, tcp_pack));
 	}
 
-	SvrSvrCon *pSvr = SvrRegMgr::Obj().GetBLVerifySvr();
+	InnerSvrCon *pSvr = VerifySvrMgr::Obj().GetBLVerifySvr();
 	if (nullptr == pSvr)
 	{
 		L_WARN("can't find verfify svr. maybe you havn't reg your verify svr.");
 		return;
 	}
-	MsgPack pack;
-	pack.Set(tcp_pack);
-	pSvr->SendData(pack);
-	m_verify_tm.StopTimer();
 
-	auto f = std::bind(&ClientSvrCon::OnVerfiyTimeOut, this);
+	pSvr->SendPack(tcp_pack.c_str(), tcp_pack.length());
+
+	m_verify_tm.StopTimer();
+	auto f = std::bind(&ExternalSvrCon::OnVerfiyTimeOut, this);
 	m_verify_tm.StartTimer(VERIFY_TIME_OUT_SEC*1000, f);
 	m_state = State::WAIT_VERIFY;
 }
 
-void ClientSvrCon::OnVerfiyTimeOut()
+void ExternalSvrCon::OnVerfiyTimeOut()
 {
 	L_ASSERT(State::WAIT_VERIFY == m_state);
 	L_WARN("wait verify time out, disconnect client");//通常验证服务器异常，导致没验证响应。
 	DisConnect();
 }
 
-void ClientSvrCon::Forward2Svr(const lc::MsgPack &msg) const
+void ExternalSvrCon::OnHeartbeatTimeOut()
 {
-	ForwardMsg f_msg;
-	if (!ClientTcpPack2ForwardMsg(msg, f_msg))
+	L_DEBUG("OnHeartbeatTimeOut, disconnect client cid=%lld", GetId());
+	DisConnect();
+}
+
+void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
+{
+	MsgForward f_msg;
+	if (!ClientTcpPack2MsgForward(msg, f_msg))
 	{
 		L_WARN("client illegal msg");
 		return;
 	}
+	if (HeartbeatInfo::Obj().cmd != 0 && HeartbeatInfo::Obj().cmd == f_msg.cmd)
+	{//reset heartbeat
+		m_heartbeat_tm.StopTimer();
+		L_ASSERT(0 != HeartbeatInfo::Obj().interval_sec);
+		auto f = std::bind(&ExternalSvrCon::OnHeartbeatTimeOut, this);
+		m_heartbeat_tm.StartTimer(HeartbeatInfo::Obj().interval_sec, f);
+		return;
+	}
+	//真正处理转发
 	uint16 svr_id = 0;
 	uint16 main_cmd = f_msg.cmd >> 16;
 	{//get svr_id
@@ -157,17 +173,16 @@ void ClientSvrCon::Forward2Svr(const lc::MsgPack &msg) const
 	}
 
 
-	SvrSvrCon *pSvr = SvrRegMgr::Obj().Find(svr_id);
+	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{
 		L_WARN("client req can't find verfify svr. svr_id=%d main_cmd=%d", svr_id, main_cmd);
 		return;
 	}
-	MsgPack pack;
+
 	string tcp_pack;
 	L_COND(ASMsg::Serialize(CMD_NTF_FORWARD, f_msg, tcp_pack));
-	pack.Set(tcp_pack);
-	pSvr->SendData(pack);
+	pSvr->SendPack(tcp_pack.c_str(), tcp_pack.length());
 
 }
 
