@@ -5,8 +5,8 @@
 #include "log_def.h"
 #include "svr_util/include/singleton.h"
 #include "svr_util/include/easy_code.h"
-#include "client_con.h"
-#include "svr_con.h"
+#include "external_con.h"
+#include "inner_con.h"
 
 class Server: public Singleton<Server>
 {

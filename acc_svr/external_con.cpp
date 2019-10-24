@@ -1,5 +1,5 @@
-#include "client_con.h"
-#include "svr_con.h"
+#include "external_con.h"
+#include "inner_con.h"
 #include "com.h"
 
 using namespace std;
@@ -152,6 +152,7 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	}
 	if (HeartbeatInfo::Obj().cmd != 0 && HeartbeatInfo::Obj().cmd == f_msg.cmd)
 	{//reset heartbeat
+		//如果这样做法效率不满意，试下 循环定时器，过期时间里面检查心跳状态是否没更新，没更新就断开。 这样让用户层不用创建销毁定时器。
 		m_heartbeat_tm.StopTimer();
 		L_ASSERT(0 != HeartbeatInfo::Obj().interval_sec);
 		auto f = std::bind(&ExternalSvrCon::OnHeartbeatTimeOut, this);

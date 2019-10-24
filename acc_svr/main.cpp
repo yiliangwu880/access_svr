@@ -5,8 +5,8 @@
 #include "svr_util/include/su_mgr.h"
 #include "svr_util/include/single_progress.h"
 #include <signal.h>
-#include "svr_con.h"
-#include "client_con.h"
+#include "inner_con.h"
+#include "external_con.h"
 
 using namespace su;
 using namespace std;

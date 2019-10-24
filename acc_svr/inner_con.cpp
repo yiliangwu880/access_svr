@@ -1,6 +1,6 @@
-#include "svr_con.h"
+#include "inner_con.h"
 #include <utility>
-#include "client_con.h"
+#include "external_con.h"
 #include "com.h"
 #include "server.h"
 
