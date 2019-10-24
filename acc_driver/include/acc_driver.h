@@ -38,7 +38,7 @@ namespace acc {
 	{
 		SessionId();
 		uint64 cid;		//acc的connect id
-		uint32 acc_id; // AccMgr::m_vec_con 索引
+		uint32 acc_id; // ConMgr::m_vec_con 索引
 		bool operator<(const SessionId &a) const;
 	};
 	class ConMgr;
@@ -48,10 +48,12 @@ namespace acc {
 	public:
 		AccFacadeMgr();
 		~AccFacadeMgr();
-		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id);
-		bool AddAcc(const Addr &addr); //运行期，新增acc
 
-		void RegSvrToAcc(uint16 svr_id);
+		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id);
+
+		//运行期，新增acc
+		bool AddAcc(const Addr &addr); 
+
 
 		//设置心跳
 		//@cmd 客户端请求消息号
@@ -86,7 +88,10 @@ namespace acc {
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
 		//接收client消息包到svr
-		virtual void OnRev(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
+		virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
+
+		//接收client消息包.请求认证的包
+		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
 
 		//client断线通知
 		virtual void OnClientDisCon(const SessionId &id) = 0;
@@ -94,7 +99,7 @@ namespace acc {
 		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
 
 	private:
-		ConMgr *m_con_mgr;
+		ConMgr &m_con_mgr;
 	};
 
 

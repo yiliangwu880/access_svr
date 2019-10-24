@@ -36,22 +36,30 @@ namespace acc {
 	class AccClientCon : public lc::ClientCon
 	{
 	public:
-		AccClientCon(AccFacadeMgr &facade, ConMgr &con_mgr);
+		AccClientCon(AccFacadeMgr &facade, ConMgr &con_mgr, uint32 acc_id);
 		bool IsReg() const { return m_is_reg; };
 
 		virtual void OnRecv(const lc::MsgPack &msg) override final;
 		virtual void OnConnected() override final;
 		virtual void OnDisconnected() override final;
 
-	private:
-		void HandleRspReg(const ASMsg &msg);
-
-		void OnTryReconTimeOut();
+		const Session *FindSession(const SessionId &id);
+		//发送 acc::ASMsg
+		bool Send(const acc::ASMsg &as_data);
 		//发送 acc::ASMsg
 		template<class CtrlMsg>
 		bool Send(acc::Cmd cmd, const CtrlMsg &send);
 
 	private:
+		void HandleRspReg(const ASMsg &msg);
+		void HandleCreateSession(const ASMsg &msg);
+		void HandleMsgForward(const ASMsg &msg);
+		void HandleVerifyReq(const ASMsg &msg);
+
+		void OnTryReconTimeOut();
+
+	private:
+		const uint32 m_acc_id;	// ConMgr::m_vec_con 索引
 		Id2Session m_id_2_s;
 		bool m_is_reg;		//true 表示一台 向acc 注册成功的svr id
 		lc::Timer m_recon_tm;	//重连acc定时器
@@ -71,6 +79,8 @@ namespace acc {
 		void SetRegSuccess(uint16 svr_id);
 		void SetFatal();
 		uint16 GetSvrId() const { return m_svr_id; }
+		AccClientCon *FindAccClientCon(const SessionId &id) const;
+		const Session *FindSession(const SessionId &id) const ;
 	private:
 		void FreeAllCon();
 

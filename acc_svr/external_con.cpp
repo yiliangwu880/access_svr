@@ -111,7 +111,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 			L_WARN("client illegal msg");
 			return;
 		}
-		L_COND(ASMsg::Serialize(CMD_NTF_FORWARD, f_msg, tcp_pack));
+		L_COND(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, f_msg, tcp_pack));
 	}
 
 	InnerSvrCon *pSvr = VerifySvrMgr::Obj().GetBLVerifySvr();

@@ -30,7 +30,7 @@
 		无状态，支持多台acc
 		会话：
 		{
-			创建 client 和 svr的session.
+			认证成功创建 client 和 svr的session.
 			svr 主动断开session
 			client 断开，session也断开。
 			svr 认证client,然后触发创建session. 等svr认证超时,断开
@@ -49,16 +49,16 @@
 		动态增加acc
 		请求注册。
 		{
-			任意一个连接的acc注册失败，算所有失败，断开。其他情况算成功。  
+			任意一个连接的acc注册成功算成功。
 			部分acc连接失败，可以不用注册。
-			注册成功后，有新的acc连接，注册响应失败。算失败。 进入无效状态。
+			任意一个连接的acc注册响应失败，算所有失败，断开。进入无效状态。
 			无效状态断开所有出错误日志。 不再重连。 （通常svr群之间没协调好，重复注册。避免问题复杂，就全部断开）
 		}
 		断线重连。 重连走注册流程。
+		创建 client 和 svr的session. 
 		{
-		
+			认证成功，acc广播svr创建session
 		}
-		创建 client 和 svr的session. 认证的session,首次从acc到svr，就创建。
 		svr 主动断开session
 		client 断开，session也断开。
 		svr 认证client,然后触发创建session.

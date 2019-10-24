@@ -74,7 +74,9 @@ namespace acc {
 		CMD_REQ_SET_HEARTBEAT_INFO,		//MsgReqSetHeartbeatInfo 设置心跳功能，可选用
 
 		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
+		CMD_NTF_CREATE_SESSION,			//MsgNtfCreateSession  验证成功的client,从acc通知所有svr,创建会话。
 
+		CMD_NTF_VERIFY_REQ,		        //MsgForward ntf转发client请求认证消息包到svr
 		CMD_NTF_FORWARD,		        //MsgForward ntf转发client消息包到svr
 		CMD_REQ_FORWARD,			    //MsgForward 请求转发client消息包到client
 
@@ -150,7 +152,7 @@ namespace acc {
 	struct MsgReqBroadCast
 	{
 		uint16 cid_len;		//cid数量
-		uint64 *cid_s;      //cid列表
+		const uint64 *cid_s;      //cid列表
 		uint32 cmd;			//client和svr层：cmd,msg
 		uint16 msg_len;     //msg字节数。
 		const char *msg;    //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
@@ -173,6 +175,11 @@ namespace acc {
 	struct MsgRspReg
 	{
 		uint32 svr_id; //失败返回 0 .
+	};
+
+	struct MsgNtfCreateSession
+	{
+		uint64 cid;
 	};
 
 	struct MsgReqVerifyRet

@@ -58,6 +58,7 @@ public:
 	InnerSvrCon();
 	~InnerSvrCon();
 	bool RegSvrId(uint16 id);
+	//return 0 表示未注册
 	uint32 GetSvrId() const { return m_svr_id; }
 	void SetVerifySvr();
 	bool IsVerifySvr() const { return m_is_verify; }
@@ -73,7 +74,7 @@ private:
 	}
 
 private:
-	uint16 m_svr_id;
+	uint16 m_svr_id;		//保持注册成功的id
 	bool m_is_verify;	//true 表示 为验证服务器
 
 };

@@ -85,8 +85,27 @@ namespace
 
 		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
 		L_COND(pClient);
+		if (pClient->IsVerify())
+		{
+			L_DEBUG("repeated verify"); //客户端重复请求验证，重复接收验证成功。
+			return;
+		}
 
 		pClient->SetVerify(req.is_success);
+
+		//通知创建会话
+		MsgNtfCreateSession ntf;
+		ntf.cid = req.cid;
+		auto f = [&ntf](SvrCon &con)
+		{
+			InnerSvrCon *pCon = dynamic_cast<InnerSvrCon *>(&con);
+			L_COND(pCon);
+			if (0 != pCon->GetSvrId())
+			{
+				pCon->Send(CMD_NTF_CREATE_SESSION, ntf);
+			}
+		};
+		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
 
 	}
 
@@ -227,6 +246,23 @@ bool InnerSvrCon::RegSvrId(uint16 id)
 		return false;
 	}
 	m_svr_id = id;
+
+	//通知创建会话
+	{
+		MsgNtfCreateSession ntf;
+		auto f = [&](SvrCon &con)
+		{
+			ExternalSvrCon *pCon = dynamic_cast<ExternalSvrCon *>(&con);
+			L_COND(pCon);
+			if (pCon->IsVerify())
+			{
+				ntf.cid = id;
+				this->Send(CMD_NTF_CREATE_SESSION, ntf);
+			}
+		};
+		Server::Obj().m_client_listener.GetConnMgr().Foreach(f);
+	}
+
 	return true;
 }
 
@@ -239,7 +275,7 @@ void InnerSvrCon::SetVerifySvr()
 bool InnerSvrCon::Send(const acc::ASMsg &as_data)
 {
 	std::string tcp_pack;
-	COND_F(as_data.Serialize(tcp_pack));
+	L_COND_F(as_data.Serialize(tcp_pack));
 	return SendPack(tcp_pack.c_str(), tcp_pack.length());
 }
 
