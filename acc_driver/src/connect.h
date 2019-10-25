@@ -55,6 +55,8 @@ namespace acc {
 		void HandleCreateSession(const ASMsg &msg);
 		void HandleMsgForward(const ASMsg &msg);
 		void HandleVerifyReq(const ASMsg &msg);
+		void HandleMsgNtfDiscon(const ASMsg &msg);
+		void HandleMsgRspSetMainCmd2Svr(const ASMsg &msg);
 
 		void OnTryReconTimeOut();
 

@@ -96,6 +96,11 @@ namespace acc {
 		//client断线通知
 		virtual void OnClientDisCon(const SessionId &id) = 0;
 
+		//
+		//@id 请求参数一样
+		//@main_cmd 请求参数一样
+		//@svr_id 0 表示失败。
+		//参考 SetMainCmd2Svr
 		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
 
 	private:

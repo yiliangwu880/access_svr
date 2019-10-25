@@ -34,6 +34,8 @@ void acc::AccClientCon::OnRecv(const lc::MsgPack &msg)
 	case CMD_NTF_CREATE_SESSION:HandleCreateSession(as_data); return;
 	case CMD_NTF_VERIFY_REQ:HandleVerifyReq(as_data); return;
 	case CMD_NTF_FORWARD:HandleMsgForward(as_data); return;
+	case CMD_NTF_DISCON:HandleMsgNtfDiscon(as_data); return;
+	case CMD_RSP_SET_MAIN_CMD_2_SVR:HandleMsgRspSetMainCmd2Svr(as_data); return;
 	default:
 		L_ERROR("unknow cmd. %d", as_data.cmd);
 		break;
@@ -138,6 +140,33 @@ void acc::AccClientCon::HandleVerifyReq(const ASMsg &msg)
 	tmp_id.cid = f_msg.cid;
 	tmp_id.acc_id = m_acc_id;
 	m_facade.OnRevVerifyReq(tmp_id, f_msg.cmd, f_msg.msg, f_msg.msg_len);
+}
+
+void acc::AccClientCon::HandleMsgNtfDiscon(const ASMsg &msg)
+{
+	MsgNtfDiscon ntf;
+	bool ret = CtrlMsgProto::Parse(msg, ntf);
+	L_COND(ret, "parse ctrl msg fail");
+
+	SessionId id;
+	id.cid = ntf.cid;
+	id.acc_id = m_acc_id;
+
+	m_id_2_s.erase(id);
+	m_facade.OnClientDisCon(id);
+}
+
+void acc::AccClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
+{
+	MsgRspSetMainCmd2Svr rsp;
+	bool ret = CtrlMsgProto::Parse(msg, rsp);
+	L_COND(ret, "parse ctrl msg fail");
+	SessionId id;
+	id.cid = rsp.cid;
+	id.acc_id = m_acc_id;
+
+	m_facade.OnSetMainCmd2SvrRsp(id, rsp.main_cmd, rsp.svr_id);
+
 }
 
 void acc::AccClientCon::OnTryReconTimeOut()

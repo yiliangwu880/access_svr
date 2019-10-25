@@ -199,7 +199,7 @@ namespace acc {
 	{
 		uint64 cid;
 		uint16 main_cmd;
-		uint16 svr_id;
+		uint16 svr_id;	//0 表示失败
 	};
 
 	struct MsgReqDiscon

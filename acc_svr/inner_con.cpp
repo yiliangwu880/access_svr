@@ -114,20 +114,28 @@ namespace
 		MsgReqSetMainCmd2Svr req;
 		bool ret = CtrlMsgProto::Parse(msg, req);
 		L_COND(ret, "parse ctrl msg fail");
-		if (req.cid == 0)
-		{
-			L_WARN("CMD_REQ_VERIFY_RET cid==0");
-			return;
-		}
-
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
-		L_COND(pClient);
-		pClient->SetMainCmd2SvrId(req.main_cmd, req.svr_id);
-
 		MsgRspSetMainCmd2Svr rsp;
 		rsp.cid = req.cid;
 		rsp.main_cmd = req.main_cmd;
 		rsp.svr_id = req.svr_id;
+		if (req.cid == 0)
+		{
+			L_WARN("CMD_REQ_VERIFY_RET cid==0");
+			rsp.svr_id = 0;
+			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
+			return;
+		}
+
+		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		if (nullptr == pClient)
+		{
+			rsp.svr_id = 0;
+			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
+			L_DEBUG("client not exist");
+			return;
+		}
+
+		pClient->SetMainCmd2SvrId(req.main_cmd, req.svr_id);
 		con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
 	}
 
