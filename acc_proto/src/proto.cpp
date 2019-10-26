@@ -63,6 +63,20 @@ bool acc::ASMsg::Serialize(std::string &tcp_pack) const
 	return true;
 }
 
+bool acc::ASMsg::Serialize(Cmd ctrl_cmd, const std::string &as_msg, std::string &tcp_pack)
+{
+	if (ctrl_cmd == CMD_NONE)
+	{
+		return false;
+	}
+
+	tcp_pack.clear();
+	//serialize ASMsg cmg
+	tcp_pack.append((const char *)&ctrl_cmd, sizeof(ctrl_cmd));
+	tcp_pack.append(as_msg);
+	return true;
+}
+
 bool acc::ASMsg::Serialize(Cmd ctrl_cmd, const MsgForward &f_msg, std::string &tcp_pack)
 {
 	if (ctrl_cmd == CMD_NONE)
@@ -194,3 +208,33 @@ bool acc::MsgReqBroadCast::Serialize(std::string &tcp_pack) const
 	return true;
 }
 
+
+bool acc::MsgReqVerifyRet::Parse(const char *tcp_pack, uint16 tcp_pack_len)
+{
+	if (0 == tcp_pack_len || nullptr == tcp_pack)
+	{
+		return false;
+	}
+	if (tcp_pack_len <= (sizeof(cid) + sizeof(is_success)))
+	{
+		return false;
+	}
+	const char *cur = tcp_pack; //读取指针
+
+	ParseCp(cid, cur);
+	ParseCp(is_success, cur);
+	forward_msg.Parse(cur, tcp_pack_len - sizeof(cid) - sizeof(is_success));
+	return  true;
+}
+
+bool acc::MsgReqVerifyRet::Serialize(std::string &tcp_pack) const
+{
+	if (cid == 0)
+	{
+		return false;
+	}
+
+	tcp_pack.append((const char *)&cid, sizeof(cid));
+	tcp_pack.append((const char *)&is_success, sizeof(is_success));
+	return forward_msg.Serialize(tcp_pack);
+}

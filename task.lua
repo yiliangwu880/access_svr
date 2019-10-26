@@ -1,3 +1,8 @@
+createsession 带： 
+		std::string remote_ip;
+		uint16 remote_port;
+		
+		
 
 acc功能写完，等浏览代码检查。代码工具检查
 实现测试用例，根据doc功能来写。

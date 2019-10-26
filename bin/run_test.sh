@@ -1,5 +1,7 @@
 #!/bin/sh
 #一步测试全部，错误信息输出到 error.txt 
+#./run_test.sh 					--测试全部
+#./run_test.sh 子模块函数名     --测试子模块
 
 user_name=`whoami`
 
@@ -185,9 +187,21 @@ function TestMoreMfSvr()
 	grep "ERROR\|error" svr_util_log.txt >>  ../error.txt 
 	cd -
 }
+
+function M1()
+{
+	echo "mmm"
+}
 #main follow
 ########################################################################################################
-Init
+#Init
+if [ $# -lt 1 ];then
+	echo "run all"
+else
+    echo "run submodue" $1
+	$1
+fi
+exit
 TestCombine
 TestGroup
 TestRecon

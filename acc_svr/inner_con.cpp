@@ -77,14 +77,22 @@ namespace
 		MsgReqVerifyRet req;
 		bool ret = CtrlMsgProto::Parse(msg, req);
 		L_COND(ret, "parse ctrl msg fail");
-		if (req.cid == 0)
+		L_COND(req.cid != 0, "CMD_REQ_VERIFY_RET cid==0");
+		const MsgForward &f_msg = req.forward_msg;
+		L_COND(0 != f_msg.cid);
+
+		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(f_msg.cid);
+		if (nullptr == pClient)
 		{
-			L_WARN("CMD_REQ_VERIFY_RET cid==0");
+			L_DEBUG("find cid fail. cid=%lld", f_msg.cid);
 			return;
 		}
-
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
-		L_COND(pClient);
+		//notify verify result to client
+		pClient->SendMsg(f_msg.cmd, f_msg.msg, f_msg.msg_len);
+		if (!req.is_success)
+		{
+			return;
+		}
 		if (pClient->IsVerify())
 		{
 			L_DEBUG("repeated verify"); //客户端重复请求验证，重复接收验证成功。
@@ -306,7 +314,11 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 			L_DEBUG("find cid fail. cid=%lld", f_msg.cid);
 			return;
 		}
-
+		if (!pClient->IsVerify())
+		{
+			L_ERROR("client is not verify. cid=%lld", f_msg.cid);
+			return;
+		}
 		pClient->SendMsg(f_msg.cmd, f_msg.msg, f_msg.msg_len);
 	}
 	else
@@ -314,6 +326,7 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 		SvrCtrlMsgDispatch::Obj().DispatchMsg(*this, as_data);
 	}
 }
+
 
 RegSvrMgr::RegSvrMgr()
 {

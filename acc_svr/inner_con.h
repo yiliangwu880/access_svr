@@ -73,6 +73,7 @@ private:
 	{
 	}
 
+
 private:
 	uint16 m_svr_id;		//保持注册成功的id
 	bool m_is_verify;	//true 表示 为验证服务器

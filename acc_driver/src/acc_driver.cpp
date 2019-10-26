@@ -11,57 +11,62 @@ using namespace acc;
 
 
 
-acc::AccFacadeMgr::AccFacadeMgr()
-	:m_con_mgr(*(new ConMgr(*this)))
+acc::ADFacadeMgr::ADFacadeMgr()
+	:m_con_mgr(ConMgr::Obj(*this))
 {
 }
 
-acc::AccFacadeMgr::~AccFacadeMgr()
+acc::ADFacadeMgr::~ADFacadeMgr()
 {
-	delete &m_con_mgr;
+
 }
 
-bool acc::AccFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
+bool acc::ADFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
 {
-
+	event_base *p = EventMgr::Obj().GetEventBase();
+	L_COND_F(p, "must call EventMgr::Obj().Init before this function"); 
 	return m_con_mgr.Init(vec_addr, svr_id);
 }
 
-bool acc::AccFacadeMgr::AddAcc(const Addr &addr)
+bool acc::ADFacadeMgr::AddAcc(const Addr &addr)
 {
 	return m_con_mgr.AddAcc(addr);
 }
 
-void acc::AccFacadeMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec)
+void acc::ADFacadeMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec)
 {
-	MsgReqSetHeartbeatInfo req;
-	req.cmd = cmd;
-	req.rsp_cmd = rsp_cmd;
-	req.interval_sec = interval_sec;
-	const std::vector<AccClientCon *> &vec = m_con_mgr.GetAllCon();
-	for (AccClientCon *p : vec)
-	{
-		L_COND(p);
-		p->Send(CMD_REQ_SET_HEARTBEAT_INFO, req);
-	}
+	m_con_mgr.SetHeartbeatInfo(cmd, rsp_cmd, interval_sec);
 }
 
-void acc::AccFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success)
+bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len)
 {
-	AccClientCon *con = m_con_mgr.FindAccClientCon(id);
-	L_COND(con);
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	L_COND_F(msg);
 
 	MsgReqVerifyRet req;
 	req.cid = id.cid;
 	req.is_success = is_success;
-	con->Send(CMD_REQ_VERIFY_RET, req);
+	
+	req.forward_msg.cid = id.cid;
+	req.forward_msg.cmd = cmd;
+	req.forward_msg.msg = msg;
+	req.forward_msg.msg_len = msg_len;
+
+	string as_msg;
+	req.Serialize(as_msg);
+	string tcp_pack;
+	ASMsg::Serialize(CMD_REQ_VERIFY_RET, as_msg, tcp_pack);
+	return con->SendPack(tcp_pack);
 }
 
-void acc::AccFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+bool acc::ADFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
-	AccClientCon *con = m_con_mgr.FindAccClientCon(id);
-	L_COND(con);
-	L_COND(nullptr != con->FindSession(id), "can't find session");
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	L_COND_F(nullptr != con->FindSession(id), "can't find session");
 
 	MsgForward req;
 	req.cid = id.cid;
@@ -70,12 +75,12 @@ void acc::AccFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char
 	req.msg_len = msg_len;
 
 	string tcp_pack;
-	L_COND(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, req, tcp_pack));
+	L_COND_F(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, req, tcp_pack));
 
-	con->SendPack(tcp_pack.c_str(), tcp_pack.length());
+	return con->SendPack(tcp_pack.c_str(), tcp_pack.length());
 }
 
-void acc::AccFacadeMgr::BroadCastToClient(uint32 cmd, const char *msg, uint16 msg_len)
+void acc::ADFacadeMgr::BroadCastToClient(uint32 cmd, const char *msg, uint16 msg_len)
 {
 	MsgReqBroadCast req;
 	req.cid_len = 0;
@@ -86,23 +91,22 @@ void acc::AccFacadeMgr::BroadCastToClient(uint32 cmd, const char *msg, uint16 ms
 
 	string req_tcp_pack;
 	req.Serialize(req_tcp_pack);
-
-	ASMsg as_msg;
-	as_msg.cmd = CMD_REQ_BROADCAST;
-	as_msg.msg = req_tcp_pack.c_str();
-	as_msg.msg_len = req_tcp_pack.length();
 	string tcp_pack;
-	as_msg.Serialize(tcp_pack);
+	L_COND(ASMsg::Serialize(CMD_REQ_BROADCAST, req_tcp_pack, tcp_pack));
 
-	const std::vector<AccClientCon *> &vec = m_con_mgr.GetAllCon();
-	for (AccClientCon *p : vec)
+	const std::vector<ADClientCon *> &vec = m_con_mgr.GetAllCon();
+	for (ADClientCon *p : vec)
 	{
 		L_COND(p);
-		p->Send(as_msg);
+		if (!p->IsReg())
+		{
+			continue;
+		}
+		p->SendPack(tcp_pack);
 	}
 }
 
-void acc::AccFacadeMgr::BroadCastToClient(const std::vector<uint64> &vec_cid, uint32 cmd, const char *msg, uint16 msg_len)
+void acc::ADFacadeMgr::BroadCastToClient(const std::vector<uint64> &vec_cid, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	MsgReqBroadCast req;
 	req.cid_len = vec_cid.size();
@@ -114,52 +118,58 @@ void acc::AccFacadeMgr::BroadCastToClient(const std::vector<uint64> &vec_cid, ui
 	string req_tcp_pack;
 	req.Serialize(req_tcp_pack);
 
-	ASMsg as_msg;
-	as_msg.cmd = CMD_REQ_BROADCAST;
-	as_msg.msg = req_tcp_pack.c_str();
-	as_msg.msg_len = req_tcp_pack.length();
 	string tcp_pack;
-	as_msg.Serialize(tcp_pack);
+	L_COND(ASMsg::Serialize(CMD_REQ_BROADCAST, req_tcp_pack, tcp_pack));
 
-	const std::vector<AccClientCon *> &vec = m_con_mgr.GetAllCon();
-	for (AccClientCon *p : vec)
+	const std::vector<ADClientCon *> &vec = m_con_mgr.GetAllCon();
+	for (ADClientCon *p : vec)
 	{
 		L_COND(p);
-		p->Send(as_msg);
+		if (!p->IsReg())
+		{
+			continue;
+		}
+		p->SendPack(tcp_pack);
 	}
 }
 
-void acc::AccFacadeMgr::DisconClient(const SessionId &id)
+bool acc::ADFacadeMgr::DisconClient(const SessionId &id)
 {
-	AccClientCon *con = m_con_mgr.FindAccClientCon(id);
-	L_COND(con);
-	L_COND(nullptr != con->FindSession(id), "can't find session");
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	L_COND_F(nullptr != con->FindSession(id), "can't find session");
 
 	MsgReqDiscon req;
 	req.cid = id.cid;
-	con->Send(CMD_REQ_DISCON, req);
+	return con->Send(CMD_REQ_DISCON, req);
 }
 
-void acc::AccFacadeMgr::DisconAllClient()
+void acc::ADFacadeMgr::DisconAllClient()
 {
-	const std::vector<AccClientCon *> &vec = m_con_mgr.GetAllCon();
-	for (AccClientCon *p : vec)
+	const std::vector<ADClientCon *> &vec = m_con_mgr.GetAllCon();
+	for (ADClientCon *p : vec)
 	{
 		L_COND(p);
+		if (!p->IsReg())
+		{
+			continue;
+		}
 		MsgReqDiscon no_use;
 		p->Send(CMD_REQ_DISCON_ALL, no_use);
 	}
 }
 
-void acc::AccFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+bool acc::ADFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id)
 {
-	AccClientCon *con = m_con_mgr.FindAccClientCon(id);
-	L_COND(con);
-	L_COND(nullptr != con->FindSession(id), "can't find session");
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	L_COND_F(nullptr != con->FindSession(id), "can't find session");
 
 	MsgReqSetMainCmd2Svr req;
 	req.cid = id.cid;
 	req.main_cmd = main_cmd;
 	req.svr_id = svr_id;
-	con->Send(CMD_REQ_SET_MAIN_CMD_2_SVR, req);
+	return con->Send(CMD_REQ_SET_MAIN_CMD_2_SVR, req);
 }

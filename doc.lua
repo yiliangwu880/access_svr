@@ -5,12 +5,20 @@
 	ad   == acc driver, 驱动，作为库给svr调用。
 	Cmd  ==client和svr通讯的消息号
 	main_cmd,sub_cmd == Cmd 由 高16位叫main_cmd,低16位叫sub_cmd组成. main_cmd来实现路由到正确的svr,默认表达svr_id，有时候需要多个svr处理相同cmd,就需要main_cmd动态映射svr_id
-
+	
 目的：
 {
-	大量客户端连接负载均衡。 多个无状态acc
 	可复用。 做到无需修改acc进程 代码，直接适用大多数种类服务器。（这个牛掰，不用花两个月时间从0开始开发，反复测试查BUG）
-	转发快。后面提到的2个时间快。 接收client数据. 从acc接收io  到 svr接收io的时间。  发送给client数据， 从svr发送io 到 acc 发送io的时间.
+}
+
+概要功能：
+{
+	与客户端建立连接。
+	消息过滤。 认证svr过的连接，才创建有效会话。
+	消息转发，负载均衡。
+	业务服务的动态扩展。 提供协议,svr可以请求acc修改路由策略.
+	保证玩家在线，切换服务器不需要重新建立连接.
+	保持心跳
 }
 
 限制： 规定了client 和svr 消息包规则，如下
@@ -23,7 +31,7 @@
 	}
 }
 
-功能：
+具体功能：
 {
 	acc:
 	{
@@ -61,7 +69,12 @@
 		}
 		svr 主动断开session
 		client 断开，session也断开。
-		svr 认证client,然后触发创建session.
+		svr 认证client,
+		{
+			 svr 需要先请求验证结果，成功或者失败。 再转发client验证通过消息。 避免成功验证，acc接收到client发第二条消息，有可能acc还没收到通知验证成功
+			 
+		}
+		被创建session.
 		svr 主动断开 所有session。
 		svr请求广播client,分全体和部分
 		设置心跳功能

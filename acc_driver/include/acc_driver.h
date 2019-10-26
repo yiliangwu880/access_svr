@@ -38,22 +38,24 @@ namespace acc {
 	{
 		SessionId();
 		uint64 cid;		//acc的connect id
-		uint32 acc_id; // ConMgr::m_vec_con 索引
+		uint32 acc_id; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
 		bool operator<(const SessionId &a) const;
 	};
+
 	class ConMgr;
-	//外观模式，给用户使用唯一接口
-	class AccFacadeMgr 
+
+	//外观模式，acc driver 接口
+	//派生类对象不能有多个。
+	class ADFacadeMgr 
 	{
 	public:
-		AccFacadeMgr();
-		~AccFacadeMgr();
+		ADFacadeMgr();
+		~ADFacadeMgr();
 
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id);
 
 		//运行期，新增acc
 		bool AddAcc(const Addr &addr); 
-
 
 		//设置心跳
 		//@cmd 客户端请求消息号
@@ -61,11 +63,11 @@ namespace acc {
 		//@interval_sec 心跳超时
 		void SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec);
 
-		//请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
-		void ReqVerifyRet(const SessionId &id, bool is_success);
+		//请求验证结果. 
+		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//发送消息包到client
-		void SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+		bool SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//广播
 		void BroadCastToClient(uint32 cmd, const char *msg, uint16 msg_len);
@@ -74,13 +76,13 @@ namespace acc {
 		void BroadCastToClient(const std::vector<uint64> &vec_cid, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//请求acc踢掉client
-		void DisconClient(const SessionId &id);
+		bool DisconClient(const SessionId &id);
 
 		//请求acc踢掉all client
 		void DisconAllClient();
 
 		//请求设置 main_cmd映射svr_id
-		void SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+		bool SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id);
 
 	public:
 		//回调注册结果
@@ -95,6 +97,9 @@ namespace acc {
 
 		//client断线通知
 		virtual void OnClientDisCon(const SessionId &id) = 0;
+
+		//client接入，创建会话。 概念类似 新socket连接客户端
+		virtual void OnClientConnect(const SessionId &id) = 0;
 
 		//
 		//@id 请求参数一样

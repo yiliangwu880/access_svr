@@ -62,6 +62,16 @@ namespace acc {
 		bool Serialize(std::string &tcp_pack) const;
 	};
 
+	//确保 svr比client先知道验证结果
+	struct MsgReqVerifyRet
+	{
+		uint64 cid;
+		bool is_success; //true表示验证成功
+		MsgForward forward_msg;// 验证结果给客户端。 
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
+	};
 
 	//控制消息定义
 	enum Cmd : uint16
@@ -132,6 +142,9 @@ namespace acc {
 
 		//@tcp_pack [out]  ASMsg对应的序列化字符串
 		static bool Serialize(Cmd ctrl_cmd, const MsgForward &forward_msg, std::string &tcp_pack);
+		//@msg_pack 为as_msg 的序列化内容。    参考： acc和svr层:	as_cmd,as_msg
+		//@tcp_pack [out]  ASMsg对应的序列化字符串
+		static bool Serialize(Cmd ctrl_cmd, const std::string &as_msg, std::string &tcp_pack);
 	};
 
 
@@ -182,11 +195,6 @@ namespace acc {
 		uint64 cid;
 	};
 
-	struct MsgReqVerifyRet
-	{
-		uint64 cid;
-		bool is_success;
-	};
 
 	struct MsgReqSetMainCmd2Svr
 	{
