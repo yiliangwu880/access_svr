@@ -6,7 +6,7 @@ namespace
 	template<class T>
 	void ParseCp(T &dst, const char *&src)
 	{
-		dst = (decltype(dst))(*src);
+		dst = (decltype(dst))(*src); // 类似 dst = (uint32 &)(*src)
 		src = src + sizeof(dst);
 	}
 
@@ -172,7 +172,7 @@ bool acc::MsgReqBroadCast::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 	}
 	else
 	{
-		cid_s = (decltype(cid_s))cur;
+		cid_s = *(decltype(cid_s)*)cur;
 		cur += cid_len * sizeof(cid_s);
 	}
 

@@ -63,15 +63,15 @@ Project "acc_driver"
 		-- "../samples/**",  
 	-- }
 	
--- Project "test_combine"
-	-- includedirs { 
-		-- "../include/",
-	-- }
+Project "test_combine"
+	includedirs { 
+		"../include/",
+	}
 
-	-- SrcPath { 
-		-- "../test/test_combine/**",  
-		-- "../test/com/**",  
-	-- }
+	SrcPath { 
+		"../test/test_combine/**",  
+		"../test/com/**",  
+	}
 	
     
     

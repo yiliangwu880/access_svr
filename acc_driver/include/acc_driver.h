@@ -52,12 +52,12 @@ namespace acc {
 		ADFacadeMgr();
 		~ADFacadeMgr();
 
-		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id);
+		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 
 		//运行期，新增acc
 		bool AddAcc(const Addr &addr); 
 
-		//设置心跳
+		//设置心跳,当前有连接acc,就请求acc设置，没有就等新连接自动设置。
 		//@cmd 客户端请求消息号
 		//@rsp_cmd 响应给客户端额消息号
 		//@interval_sec 心跳超时
@@ -85,8 +85,8 @@ namespace acc {
 		bool SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id);
 
 	public:
-		//回调注册结果
-		//@svr_id =0表示失败
+		//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
+		//@svr_id = 0表示失败
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
 		//接收client消息包到svr
@@ -101,7 +101,7 @@ namespace acc {
 		//client接入，创建会话。 概念类似 新socket连接客户端
 		virtual void OnClientConnect(const SessionId &id) = 0;
 
-		//
+		//设置会话自定义映射main_cmd to svr_id
 		//@id 请求参数一样
 		//@main_cmd 请求参数一样
 		//@svr_id 0 表示失败。

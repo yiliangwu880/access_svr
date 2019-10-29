@@ -66,7 +66,7 @@ namespace acc {
 		void OnTryReconTimeOut();
 	};
 
-	//单例
+	//单例, 一个svr一个进程。把问题简化
 	class ConMgr
 	{
 		ConMgr(ADFacadeMgr &facade);
@@ -75,21 +75,24 @@ namespace acc {
 		std::vector<ADClientCon *> m_vec_con;
 		ADFacadeMgr &m_facade;
 		uint16 m_svr_id;
-		bool m_is_fatal;      //严重错误状态，断开，不再连接。
+		bool m_is_fatal;      //严重错误状态，断开，不再连接，不再修复，等重启。
+		bool m_is_reg; 
+		bool m_is_verify_svr;
 		MsgReqSetHeartbeatInfo m_heartbeat_info;
 
 	public:
 		static ConMgr &Obj(ADFacadeMgr &facade);
-		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id);
+		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 		bool AddAcc(const Addr &addr);
 		const std::vector<ADClientCon *> &GetAllCon() const { return m_vec_con; };
 		//致命错误，设置整个svr无效
 		//请求任意一个acc注册失效，触发。通常配置错误引起，等重启修复吧。
 		void SetFatal();
 		uint16 GetSvrId() const { return m_svr_id; }
+		bool IsVerify() const { return m_is_verify_svr; }
 		ADClientCon *FindADClientCon(const SessionId &id) const;
 		const Session *FindSession(const SessionId &id) const;
-
+		void SetRegResult(bool is_success);
 		//设置心跳
 		//@cmd 客户端请求消息号
 		//@rsp_cmd 响应给客户端额消息号

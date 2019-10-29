@@ -62,22 +62,18 @@
 			任意一个连接的acc注册响应失败，算所有失败，断开。进入无效状态。
 			无效状态断开所有出错误日志。 不再重连。 （通常svr群之间没协调好，重复注册。避免问题复杂，就全部断开）
 		}
+		设置心跳功能
 		断线重连。 重连走注册流程。
 		创建 client 和 svr的session. 
 		{
 			认证成功，acc广播svr创建session
+			svr注册成功，已认证的acc外部连接创建session
 		}
 		svr 主动断开session
 		client 断开，session也断开。
-		svr 认证client,
-		{
-			 svr 需要先请求验证结果，成功或者失败。 再转发client验证通过消息。 避免成功验证，acc接收到client发第二条消息，有可能acc还没收到通知验证成功
-			 
-		}
-		被创建session.
+		svr 认证client.
 		svr 主动断开 所有session。
 		svr请求广播client,分全体和部分
-		设置心跳功能
 		接收转发client和svr层消息
 		请求设置 main_cmd映射svr_id
 	}

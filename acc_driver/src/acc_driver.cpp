@@ -21,11 +21,11 @@ acc::ADFacadeMgr::~ADFacadeMgr()
 
 }
 
-bool acc::ADFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
+bool acc::ADFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr)
 {
 	event_base *p = EventMgr::Obj().GetEventBase();
 	L_COND_F(p, "must call EventMgr::Obj().Init before this function"); 
-	return m_con_mgr.Init(vec_addr, svr_id);
+	return m_con_mgr.Init(vec_addr, svr_id, is_verify_svr);
 }
 
 bool acc::ADFacadeMgr::AddAcc(const Addr &addr)
@@ -75,7 +75,7 @@ bool acc::ADFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char 
 	req.msg_len = msg_len;
 
 	string tcp_pack;
-	L_COND_F(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, req, tcp_pack));
+	L_COND_F(ASMsg::Serialize(CMD_REQ_FORWARD, req, tcp_pack));
 
 	return con->SendPack(tcp_pack.c_str(), tcp_pack.length());
 }

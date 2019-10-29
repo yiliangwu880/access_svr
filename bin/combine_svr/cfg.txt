@@ -1,5 +1,0 @@
-inner_ip=127.0.0.1  #内部侦听地址
-inner_port=6551	
-ex_ip=127.0.0.1#外部侦听地址
-ex_port=6551
-is_daemon = 1 

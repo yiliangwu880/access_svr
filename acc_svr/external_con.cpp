@@ -93,7 +93,7 @@ bool ExternalSvrCon::ClientTcpPack2MsgForward(const lc::MsgPack &msg, MsgForward
 	L_COND_F(msg.len>=sizeof(f_msg.cmd));
 	f_msg.cid = GetId();
 	const char *cur = msg.data;
-	f_msg.cmd = (decltype(f_msg.cmd))(*cur);	cur = cur + sizeof(f_msg.cmd);
+	f_msg.cmd = *(decltype(f_msg.cmd)*)(cur);	cur = cur + sizeof(f_msg.cmd);
 	f_msg.msg = cur;
 	f_msg.msg_len = msg.len - sizeof(f_msg.cmd);
 	return true;
@@ -106,11 +106,13 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 	string tcp_pack;
 	{//client tcp pack to ASData tcp pack 
 		MsgForward f_msg;
+		//L_DEBUG("msg.data first 32bit = %x", *(uint32*)msg.data);
 		if (!ClientTcpPack2MsgForward(msg, f_msg))
 		{
 			L_WARN("client illegal msg");
 			return;
 		}
+		//L_DEBUG("f_msg.cmd = %x", f_msg.cmd);
 		L_COND(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, f_msg, tcp_pack));
 	}
 
@@ -156,7 +158,9 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		m_heartbeat_tm.StopTimer();
 		L_ASSERT(0 != HeartbeatInfo::Obj().interval_sec);
 		auto f = std::bind(&ExternalSvrCon::OnHeartbeatTimeOut, this);
-		m_heartbeat_tm.StartTimer(HeartbeatInfo::Obj().interval_sec, f);
+		L_DEBUG("rev beat, start time sec=%d", HeartbeatInfo::Obj().interval_sec);
+		m_heartbeat_tm.StartTimer(HeartbeatInfo::Obj().interval_sec*1000, f);
+		SendMsg(HeartbeatInfo::Obj().rsp_cmd, "", 0);
 		return;
 	}
 	//真正处理转发
@@ -173,11 +177,11 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		}
 	}
 
-
+	L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, HeartbeatInfo::Obj().cmd, HeartbeatInfo::Obj().rsp_cmd);
 	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{
-		L_WARN("client req can't find verfify svr. svr_id=%d main_cmd=%d", svr_id, main_cmd);
+		L_WARN("client req can't find verfify svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
 		return;
 	}
 

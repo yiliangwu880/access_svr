@@ -45,6 +45,7 @@ void acc::ADClientCon::OnConnected()
 	{
 		MsgReqReg req;
 		req.svr_id = m_con_mgr.GetSvrId();
+		req.is_verify = m_con_mgr.IsVerify();
 		L_COND(req.svr_id);
 		Send(CMD_REQ_REG, req);
 	}
@@ -60,7 +61,7 @@ void acc::ADClientCon::OnConnected()
 
 void acc::ADClientCon::OnDisconnected()
 {
-	L_DEBUG("start try recon timer , sec=%s", RE_CON_INTERVAL_SEC);
+	L_DEBUG("start try recon timer , sec=%d", RE_CON_INTERVAL_SEC);
 	m_is_reg = false;
 	auto f = std::bind(&ADClientCon::OnTryReconTimeOut, this);
 	m_recon_tm.StopTimer();
@@ -94,14 +95,14 @@ void acc::ADClientCon::HandleRspReg(const ASMsg &msg)
 	if (0 == rsp.svr_id)
 	{
 		L_FATAL("reg error, stop all connect to acc");
+		m_con_mgr.SetRegResult(0);
 		m_con_mgr.SetFatal();
-		m_facade.OnRegResult(0);
 		return;
 	}
 	L_COND(rsp.svr_id == m_con_mgr.GetSvrId());//可能请求代码ID出错
 
 	m_is_reg = true;
-	m_facade.OnRegResult(rsp.svr_id);
+	m_con_mgr.SetRegResult(true);
 }
 
 void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
@@ -213,6 +214,8 @@ acc::ConMgr::ConMgr(ADFacadeMgr &facade)
 	:m_facade(facade)
 	, m_svr_id(0)
 	, m_is_fatal(false)
+	, m_is_reg(false)
+	, m_is_verify_svr(false)
 {
 
 }
@@ -233,7 +236,7 @@ acc::ConMgr & acc::ConMgr::Obj(ADFacadeMgr &facade)
 	return obj;
 }
 
-bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
+bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr)
 {
 	L_COND_F(!m_is_fatal);
 	L_COND_F(!vec_addr.empty());
@@ -251,6 +254,7 @@ bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
 	}
 
 	m_svr_id = svr_id;
+	m_is_verify_svr = is_verify_svr;
 	for (auto &v : vec_addr)
 	{
 		ADClientCon *p = new ADClientCon(m_facade, *this, m_vec_con.size());
@@ -263,6 +267,7 @@ bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id)
 		}
 		m_vec_con.push_back(p);
 	}
+//	L_DEBUG("m_vec_con or acc size=%d", m_vec_con.size());
 	return true;
 }
 
@@ -301,7 +306,8 @@ void acc::ConMgr::SetFatal()
 
 acc::ADClientCon * acc::ConMgr::FindADClientCon(const SessionId &id) const
 {
-	L_COND_R(id.acc_id >= m_vec_con.size(), nullptr, "acc_id overload %d", id.acc_id);
+	//L_DEBUG("m_vec_con.size()=%d", m_vec_con.size());
+	L_COND_R(id.acc_id < m_vec_con.size(), nullptr, "acc_id overload %d", id.acc_id);
 
 	return m_vec_con[id.acc_id];
 }
@@ -316,15 +322,40 @@ const acc::Session * acc::ConMgr::FindSession(const SessionId &id) const
 	return con->FindSession(id);
 }
 
+void acc::ConMgr::SetRegResult(bool is_success)
+{
+	if (!is_success)
+	{
+		m_facade.OnRegResult(0);
+		return;
+	}
+
+	if (!m_is_reg)
+	{
+		L_COND(m_svr_id);
+		m_is_reg = true;
+		m_facade.OnRegResult(m_svr_id);
+	}
+}
+
 void acc::ConMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec)
 {
 	m_heartbeat_info.cmd = cmd;
 	m_heartbeat_info.rsp_cmd = rsp_cmd;
 	m_heartbeat_info.interval_sec = interval_sec;
+
+	for (ADClientCon *p : m_vec_con)
+	{
+		if (p->IsConnect())
+		{
+			p->Send(CMD_REQ_SET_HEARTBEAT_INFO, m_heartbeat_info);
+		}
+	}
 }
 
 void acc::ConMgr::FreeAllCon()
 {
+	L_DEBUG("FreeAllCon acc");
 	for (ADClientCon *v : m_vec_con)
 	{
 		delete v;

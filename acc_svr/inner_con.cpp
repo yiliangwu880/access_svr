@@ -75,8 +75,7 @@ namespace
 	void Parse_CMD_REQ_VERIFY_RET(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
 		MsgReqVerifyRet req;
-		bool ret = CtrlMsgProto::Parse(msg, req);
-		L_COND(ret, "parse ctrl msg fail");
+		L_COND(req.Parse(msg.msg, msg.msg_len), "parse ctrl msg fail");
 		L_COND(req.cid != 0, "CMD_REQ_VERIFY_RET cid==0");
 		const MsgForward &f_msg = req.forward_msg;
 		L_COND(0 != f_msg.cid);
@@ -299,6 +298,7 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 {
 	ASMsg as_data;
 	L_COND(as_data.Parse(msg.data, msg.len));
+	L_DEBUG("as_data.cmd=%x", as_data.cmd);
 	if (CMD_REQ_FORWARD == as_data.cmd)//直接转发，不用分发，快点
 	{
 		MsgForward f_msg;
