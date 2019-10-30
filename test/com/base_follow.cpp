@@ -12,6 +12,8 @@ namespace
 	static const uint32 CMD_MSG = ((uint32)BF_SVR1 << 16) | 2;
 	static const uint32 CMD_BEAT_REQ = 3;
 	static const uint32 CMD_BEAT_RSP = 4;
+	static const uint32 CMD_BROADCAST = 5;
+	static const uint32 CMD_BROADCAST_PART = 6;
 }
 
 BaseFlowClient::BaseFlowClient(BaseFunFollowMgr &mgr)
@@ -98,7 +100,7 @@ void BaseFlowSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *ms
 	string s(msg, msg_len);
 	UNIT_ASSERT(s == "verify");
 	string rsp_msg = "verify_ok";
-	AllADFacadeMgr::Obj().ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
+	m_mgr.m_svr1.ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
 	m_state = State::WAIT_CLIENT_MSG;
 
 }
@@ -109,7 +111,7 @@ void BaseFlowSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *ms
 	UNIT_ASSERT(State::WAIT_CLIENT_MSG == m_state);
 	string s(msg, msg_len);
 	UNIT_ASSERT(s == "msg");
-	AllADFacadeMgr::Obj().SendToClient(id, cmd, msg, msg_len);
+	m_mgr.m_svr1.SendToClient(id, cmd, msg, msg_len);
 	m_state = State::WAIT_CLIENT_DISCON;
 }
 
@@ -141,6 +143,12 @@ BaseFunFollowMgr::BaseFunFollowMgr()
 	,m_svr(*this)
 	,m_h_client(*this)
 	,m_h_svr(*this)
+	,m_bd_client({*this,*this,*this})
+	,m_bd_svr(*this)
+	,m_route_svr1(*this)
+	, m_route_svr2(*this)
+	, m_route_client(*this)
+
 {
 	m_state = State::RUN_CORRECT_FOLLOW;
 }
@@ -155,8 +163,8 @@ bool BaseFunFollowMgr::Init()
 	Addr ex_addr = ex_vec[0];
 	auto vec = inner_vec;
 	vec.resize(1);
-	UNIT_ASSERT(AllADFacadeMgr::Obj().Init(vec, 1, true));
-	AllADFacadeMgr::Obj().m_svr_cb = &m_svr;
+	UNIT_ASSERT(m_svr1.Init(vec, 1, true));
+	m_svr1.m_svr_cb = &m_svr;
 	UNIT_ASSERT(m_client.ConnectInit(ex_addr.ip.c_str(), ex_addr.port));
 	return true;
 
@@ -168,7 +176,7 @@ void BaseFunFollowMgr::StartHeartbeatTest()
 	UNIT_ASSERT(m_state == State::RUN_CORRECT_FOLLOW);
 	m_state = State::RUN_HEARBEAT;
 	// svr连接对象还是复用 BaseFlowSvr创建的
-	AllADFacadeMgr::Obj().m_svr_cb = &m_h_svr;
+	m_svr1.m_svr_cb = &m_h_svr;
 	m_h_svr.Start();
 
 	//delay start client
@@ -188,12 +196,27 @@ void BaseFunFollowMgr::CheckBearHeatEnd()
 	//验收再测试状态，因为client, svr,是网络消息接收才改变最后状态，不同步
 	auto f = [&]()
 	{
+		UNIT_ASSERT(m_state == State::RUN_HEARBEAT);
 		UNIT_ASSERT(m_h_svr.m_state == HearBeatSvr::State::END);
 		UNIT_ASSERT(m_h_client.m_state == HearBeatClient::State::END);
 		UNIT_INFO("BaseFunFollowMgr::CheckBearHeatEnd");
+		StartCheckBD();
 	};
 	m_tm.StopTimer();
 	m_tm.StartTimer(1 * 1000, f);
+}
+
+void BaseFunFollowMgr::StartCheckBD()
+{
+	m_state = State::RUN_BROADCAST_DISCON;
+	m_svr1.m_svr_cb = &m_bd_svr;
+	m_bd_svr.Start();
+}
+
+void BaseFunFollowMgr::StartCheckRoute()
+{
+	m_state = State::RUN_ROUTE;
+	UNIT_INFO("start RUN_ROUTE");
 }
 
 void BaseClient::SendStr(uint32 cmd, const std::string &msg)
@@ -271,7 +294,7 @@ void HearBeatSvr::Start()
 {
 	UNIT_ASSERT(m_state == State::WAIT_VERFIY_REQ);
 	UNIT_INFO(" HearBeatSvr::Start");
-	AllADFacadeMgr::Obj().SetHeartbeatInfo(CMD_BEAT_REQ, CMD_BEAT_RSP, 2);
+	m_mgr.m_svr1.SetHeartbeatInfo(CMD_BEAT_REQ, CMD_BEAT_RSP, 2);
 }
 
 void HearBeatSvr::OnRegResult(uint16 svr_id)
@@ -292,7 +315,7 @@ void HearBeatSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *ms
 	string s(msg, msg_len);
 	UNIT_ASSERT(s == "verify");
 	string rsp_msg = "verify_ok";
-	AllADFacadeMgr::Obj().ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
+	m_mgr.m_svr1.ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
 	m_state = State::WAIT_CLIENT_BEAT_TIME_OUT;
 }
 
@@ -313,3 +336,237 @@ void HearBeatSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint
 {
 
 }
+
+BDClient::BDClient(BaseFunFollowMgr &mgr)
+	:m_mgr(mgr)
+{
+	m_id = 0;
+}
+
+void BDClient::OnRecvMsg(uint32 cmd, const std::string &msg)
+{
+	if (CMD_VERIFY == cmd)
+	{
+		UNIT_INFO("verify ok");
+	}
+	else if (CMD_BROADCAST == cmd)
+	{
+		UNIT_ASSERT(msg == "CMD_BROADCAST");
+		m_mgr.m_bd_svr.ClientRevBroadCmd();
+	}
+	else if (CMD_BROADCAST_PART == cmd)
+	{
+		UNIT_ASSERT(msg == "CMD_BROADCAST");
+		m_mgr.m_bd_svr.ClientRevBroadPartCmd();
+	}
+	else
+	{
+		UNIT_INFO("unknow cmd =%x", cmd);
+		UNIT_ASSERT(false);
+	}
+}
+
+void BDClient::OnConnected()
+{
+	m_mgr.m_bd_svr.ClientOnConnected(m_id);
+	SendStr(CMD_VERIFY, "verify");
+}
+
+void BDClient::OnDisconnected()
+{
+	UNIT_INFO("diconnect BDClient. idx=%d", m_id);
+}
+
+BDSvr::BDSvr(BaseFunFollowMgr &mgr)
+	: m_mgr(mgr)
+{
+	m_state = State::WAIT_ALL_CLIENT_CONNECT;
+	m_broadpartCmd_cnt = 0;
+	m_broadCmd_cnt = 0;
+	m_tmp_num = 0;
+}
+
+void BDSvr::Start()
+{
+	UNIT_ASSERT(m_state == State::WAIT_ALL_CLIENT_CONNECT);
+	UNIT_INFO("test broadcast, disconnect start");
+
+	//all client connect init
+	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	UNIT_ASSERT(ex_vec.size() > 1);
+	uint32 idx = 0;
+	for (auto &client : m_mgr.m_bd_client)
+	{
+		client.m_id = idx;
+		UNIT_ASSERT(client.ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
+		idx++;
+	}
+	m_client_set.clear();
+}
+
+void BDSvr::ClientOnConnected(uint32 idx)
+{
+	UNIT_ASSERT(m_state == State::WAIT_ALL_CLIENT_CONNECT);
+	bool r = m_client_set.insert(idx).second;
+	UNIT_ASSERT(r);
+	if (m_client_set.size() == m_mgr.m_bd_client.size())
+	{//all connect
+		m_state = State::WAIT_ALL_VERIFY_OK;
+		m_client_set.clear();
+	}
+}
+
+void BDSvr::ClientRevBroadCmd()
+{
+	UNIT_ASSERT(m_state == State::WAIT_BROADCAST);
+	m_broadCmd_cnt++;
+	CheckBroadEnd();
+}
+
+void BDSvr::ClientRevBroadPartCmd()
+{
+	UNIT_ASSERT(m_state == State::WAIT_BROADCAST);
+	m_broadpartCmd_cnt++;
+	CheckBroadEnd();
+}
+
+void BDSvr::CheckBroadEnd()
+{
+	UNIT_ASSERT(m_state == State::WAIT_BROADCAST);
+	if (m_broadCmd_cnt == m_mgr.m_bd_client.size() && m_broadpartCmd_cnt == 1)
+	{
+		UNIT_INFO("finish broadcast test, start discon one client. cid=%llx", m_anyone_sid.cid);
+		m_state = State::WAIT_DISCON_ONE;
+		UNIT_ASSERT(m_anyone_sid.cid != 0);
+		m_mgr.m_svr1.DisconClient(m_anyone_sid);
+	}
+}
+
+void BDSvr::OnRegResult(uint16 svr_id)
+{
+}
+
+void BDSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+{
+
+}
+
+void BDSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+{
+	UNIT_ASSERT(CMD_VERIFY == cmd);
+	string s(msg, msg_len);
+	UNIT_ASSERT(s == "verify");
+	string rsp_msg = "verify_ok";
+	m_mgr.m_svr1.ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
+}
+
+void BDSvr::OnClientDisCon(const SessionId &id)
+{
+	UNIT_INFO("OnClientDisCon cid=%llx", id.cid);
+	if (m_state == State::WAIT_DISCON_ONE)
+	{
+		UNIT_ASSERT(m_anyone_sid.cid == id.cid);
+		UNIT_ASSERT(m_anyone_sid.acc_id == id.acc_id);
+		UNIT_INFO("discon all");
+		m_state = State::WAIT_DISCON_ALL;
+		m_mgr.m_svr1.DisconAllClient();
+		m_tmp_num = 0;
+	}
+	else if (m_state == State::WAIT_DISCON_ALL)
+	{
+		m_tmp_num++;
+		if (m_tmp_num == 2)
+		{
+			m_state = State::END;
+			m_mgr.StartCheckRoute();
+		}
+	}
+	else
+	{
+		UNIT_ASSERT(false);
+	}
+}
+
+void BDSvr::OnClientConnect(const SessionId &id)
+{
+	UNIT_ASSERT(m_state == State::WAIT_ALL_VERIFY_OK);
+	m_anyone_sid = id;
+	bool r = m_client_set.insert(id.cid).second;
+	UNIT_ASSERT(r);
+	UNIT_INFO("verify SessionId: acc_id=%llx cid=%llx", id.acc_id, id.cid);
+	if (m_client_set.size() == m_mgr.m_bd_client.size())
+	{//all verify ok
+		UNIT_INFO("all verify ok");
+		m_state = State::WAIT_BROADCAST;
+		string s = "CMD_BROADCAST";
+		m_mgr.m_svr1.BroadCastToClient(CMD_BROADCAST, s.c_str(), s.length());
+		std::vector<uint64> vec_cid;
+		vec_cid.push_back(id.cid);
+		m_mgr.m_svr1.BroadCastToClient(vec_cid, CMD_BROADCAST_PART, s.c_str(), s.length());
+		m_client_set.clear();
+	}
+}
+
+void BDSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+{
+
+}
+
+RouteClient::RouteClient(BaseFunFollowMgr &mgr)
+	:m_mgr(mgr)
+{
+
+}
+
+void RouteClient::OnRecvMsg(uint32 cmd, const std::string &msg)
+{
+
+}
+
+void RouteClient::OnConnected()
+{
+
+}
+
+void RouteClient::OnDisconnected()
+{
+
+}
+
+RouteSvr::RouteSvr(BaseFunFollowMgr &mgr)
+	: m_mgr(mgr)
+{
+
+}
+
+void RouteSvr::OnRegResult(uint16 svr_id)
+{
+
+}
+
+void RouteSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+{
+
+}
+
+void RouteSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+{
+
+}
+
+void RouteSvr::OnClientDisCon(const SessionId &id)
+{
+
+}
+
+void RouteSvr::OnClientConnect(const SessionId &id)
+{
+
+}
+
+void RouteSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+{
+
+}
+
+

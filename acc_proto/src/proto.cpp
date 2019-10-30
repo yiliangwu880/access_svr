@@ -156,6 +156,11 @@ bool acc::MsgForward::Serialize(std::string &tcp_pack) const
 	return true;
 }
 
+acc::MsgReqBroadCast::MsgReqBroadCast()
+{
+	memset(this, 0, sizeof(*this));
+}
+
 bool acc::MsgReqBroadCast::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 {
 	if (0 == tcp_pack_len || nullptr == tcp_pack)
@@ -172,8 +177,8 @@ bool acc::MsgReqBroadCast::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 	}
 	else
 	{
-		cid_s = *(decltype(cid_s)*)cur;
-		cur += cid_len * sizeof(cid_s);
+		cid_s = (const uint64 *)cur;
+		cur += cid_len * sizeof(uint64);
 	}
 
 	ParseCp(cmd, cur);
@@ -201,7 +206,7 @@ bool acc::MsgReqBroadCast::Serialize(std::string &tcp_pack) const
 		return false;
 	}
 	tcp_pack.append((const char *)&cid_len, sizeof(cid_len));
-	tcp_pack.append((const char *)cid_s, cid_len * sizeof(cid_s));
+	tcp_pack.append((const char *)cid_s, cid_len * sizeof(uint64));
 	tcp_pack.append((const char *)&cmd, sizeof(cmd));
 	tcp_pack.append((const char *)&msg_len, sizeof(msg_len));
 	tcp_pack.append(msg, msg_len);

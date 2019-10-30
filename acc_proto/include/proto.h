@@ -164,6 +164,7 @@ namespace acc {
 
 	struct MsgReqBroadCast
 	{
+		MsgReqBroadCast();
 		uint16 cid_len;		//cid数量
 		const uint64 *cid_s;      //cid列表
 		uint32 cmd;			//client和svr层：cmd,msg

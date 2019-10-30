@@ -41,7 +41,7 @@ public:
 	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
 };
 
-class AllADFacadeMgr : public acc::ADFacadeMgr , public Singleton<AllADFacadeMgr>
+class AllADFacadeMgr : public acc::ADFacadeMgr 
 {
 public:
 	ISvrCallBack *m_svr_cb;//因为 ADFacadeMgr智能有一个对象，需要多种行为，就间接一层.

@@ -31,8 +31,10 @@ namespace
 	{
 		L_INFO("svr req disconnect all client");
 		BaseConMgr &conMgr = Server::Obj().m_client_listener.GetConnMgr();
+		//L_DEBUG("con size=%d, wait del size=%d", conMgr.GetAllCon().size(), conMgr.GetWaitDelConSize());
 		auto f=[](SvrCon &svr_con)
 		{
+			//L_DEBUG("DisConnect cid=%llx", svr_con.GetId());
 			svr_con.DisConnect();
 		};
 		conMgr.Foreach(f);
@@ -186,9 +188,9 @@ namespace
 				{
 					continue;
 				}
-				if (pClient->IsVerify())
+				if (!pClient->IsVerify())
 				{
-					L_ERROR("unverifyed client can't be set uin");//哪里错误了，未认证不能设置uin
+					L_ERROR("unverifyed client can't be broadcast, %llx", req.cid_s[i]);//哪里错误了，未认证不能设置广播
 					continue;
 				}
 				pClient->SendPack(tcp_pack.c_str(), tcp_pack.length());

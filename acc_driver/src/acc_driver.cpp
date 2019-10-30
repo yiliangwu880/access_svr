@@ -12,13 +12,14 @@ using namespace acc;
 
 
 acc::ADFacadeMgr::ADFacadeMgr()
-	:m_con_mgr(ConMgr::Obj(*this))
+	:m_con_mgr(*(new ConMgr(*this)))
 {
+	
 }
 
 acc::ADFacadeMgr::~ADFacadeMgr()
 {
-
+	delete &m_con_mgr;
 }
 
 bool acc::ADFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr)

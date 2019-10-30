@@ -45,7 +45,6 @@ namespace acc {
 	class ConMgr;
 
 	//外观模式，acc driver 接口
-	//派生类对象不能有多个。
 	class ADFacadeMgr 
 	{
 	public:
@@ -73,6 +72,7 @@ namespace acc {
 		void BroadCastToClient(uint32 cmd, const char *msg, uint16 msg_len);
 
 		//广播部分客户端
+		//@vec_cid 为cid列表
 		void BroadCastToClient(const std::vector<uint64> &vec_cid, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//请求acc踢掉client
@@ -98,7 +98,7 @@ namespace acc {
 		//client断线通知
 		virtual void OnClientDisCon(const SessionId &id) = 0;
 
-		//client接入，创建会话。 概念类似 新socket连接客户端
+		//client认证成功，创建会话。 概念类似 新socket连接客户端
 		virtual void OnClientConnect(const SessionId &id) = 0;
 
 		//设置会话自定义映射main_cmd to svr_id
@@ -109,7 +109,7 @@ namespace acc {
 		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
 
 	private:
-		ConMgr &m_con_mgr;
+		ConMgr &m_con_mgr; //具体状态，和对外接口分离
 	};
 
 

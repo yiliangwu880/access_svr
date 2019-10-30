@@ -66,11 +66,9 @@ namespace acc {
 		void OnTryReconTimeOut();
 	};
 
-	//单例, 一个svr一个进程。把问题简化
+
 	class ConMgr
 	{
-		ConMgr(ADFacadeMgr &facade);
-		~ConMgr();
 	private:
 		std::vector<ADClientCon *> m_vec_con;
 		ADFacadeMgr &m_facade;
@@ -78,10 +76,11 @@ namespace acc {
 		bool m_is_fatal;      //严重错误状态，断开，不再连接，不再修复，等重启。
 		bool m_is_reg; 
 		bool m_is_verify_svr;
-		MsgReqSetHeartbeatInfo m_heartbeat_info;
+		MsgReqSetHeartbeatInfo m_heartbeat_info; //如果有信息，ADClientCon连接成功会发送设置心跳信息到acc
 
 	public:
-		static ConMgr &Obj(ADFacadeMgr &facade);
+		ConMgr(ADFacadeMgr &facade);
+		~ConMgr();
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 		bool AddAcc(const Addr &addr);
 		const std::vector<ADClientCon *> &GetAllCon() const { return m_vec_con; };

@@ -65,7 +65,7 @@ void acc::ADClientCon::OnDisconnected()
 	m_is_reg = false;
 	auto f = std::bind(&ADClientCon::OnTryReconTimeOut, this);
 	m_recon_tm.StopTimer();
-	m_recon_tm.StartTimer(RE_CON_INTERVAL_SEC, f);
+	m_recon_tm.StartTimer(RE_CON_INTERVAL_SEC*1000, f);
 }
 
 const acc::Session *acc::ADClientCon::FindSession(const SessionId &id)
@@ -225,16 +225,7 @@ acc::ConMgr::~ConMgr()
 	FreeAllCon();
 }
 
-acc::ConMgr & acc::ConMgr::Obj(ADFacadeMgr &facade)
-{
-	static ConMgr obj(facade);
-	if (&facade != &obj.m_facade)
-	{
-		L_FATAL("can't point more then one AccFacadeMgr obj");
-		return *((ConMgr*)nullptr);//空指针比混乱了好
-	}
-	return obj;
-}
+
 
 bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr)
 {

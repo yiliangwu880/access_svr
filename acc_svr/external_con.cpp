@@ -25,6 +25,7 @@ ExternalSvrCon::~ExternalSvrCon()
 			L_COND(p);
 			p->Send(CMD_NTF_DISCON, ntf);
 		}
+		L_DEBUG("external client destroy . cid=%llx", GetId());
 	}
 }
 
