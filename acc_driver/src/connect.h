@@ -42,6 +42,7 @@ namespace acc {
 
 	public:
 		ADClientCon(ADFacadeMgr &facade, ConMgr &con_mgr, uint32 acc_id);
+		~ADClientCon() {};
 		bool IsReg() const { return m_is_reg; };
 
 		virtual void OnRecv(const lc::MsgPack &msg) override final;

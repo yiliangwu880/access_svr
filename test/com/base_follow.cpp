@@ -14,9 +14,12 @@ namespace
 	static const uint32 CMD_BEAT_RSP = 4;
 	static const uint32 CMD_BROADCAST = 5;
 	static const uint32 CMD_BROADCAST_PART = 6;
+	static const uint32 CMD_SVR1_MSG = ((uint32)BF_SVR1 << 16) | 10;
+	static const uint32 CMD_SVR2_MSG = ((uint32)BF_SVR2 << 16) | 10;
+	static const uint32 CMD_SVR3_MSG = ((uint32)BF_SVR3 << 16) | 10;
 }
 
-BaseFlowClient::BaseFlowClient(BaseFunFollowMgr &mgr)
+BaseFlowClient::BaseFlowClient(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
 	m_state = State::WAIT_SVR_REG;
@@ -75,7 +78,7 @@ void BaseFlowClient::OnDisconnected()
 
 
 
-BaseFlowSvr::BaseFlowSvr(BaseFunFollowMgr &mgr)
+BaseFlowSvr::BaseFlowSvr(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
 	m_state = State::WAIT_SVR_REG;
@@ -138,7 +141,7 @@ void BaseFlowSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint
 }
 
 
-BaseFunFollowMgr::BaseFunFollowMgr()
+BaseFunTestMgr::BaseFunTestMgr()
 	:m_client(*this)
 	,m_svr(*this)
 	,m_h_client(*this)
@@ -151,10 +154,12 @@ BaseFunFollowMgr::BaseFunFollowMgr()
 
 {
 	m_state = State::RUN_CORRECT_FOLLOW;
+	m_route_svr1.m_svr_id = 1;
+	m_route_svr2.m_svr_id = 2;
 }
 
 
-bool BaseFunFollowMgr::Init()
+bool BaseFunTestMgr::Init()
 {
 	const std::vector<Addr> &inner_vec = CfgMgr::Obj().m_inner_vec;
 	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
@@ -165,12 +170,19 @@ bool BaseFunFollowMgr::Init()
 	vec.resize(1);
 	UNIT_ASSERT(m_svr1.Init(vec, 1, true));
 	m_svr1.m_svr_cb = &m_svr;
+
+	UNIT_ASSERT(m_svr2.Init(vec, 2));
+	m_svr2.m_svr_cb = &m_route_svr2;
 	UNIT_ASSERT(m_client.ConnectInit(ex_addr.ip.c_str(), ex_addr.port));
+	//{
+	//	UNIT_INFO("tmp test");
+	//	StartCheckRoute();
+	//}
 	return true;
 
 }
 
-void BaseFunFollowMgr::StartHeartbeatTest()
+void BaseFunTestMgr::StartHeartbeatTest()
 {
 	UNIT_INFO("start heartbeat test");
 	UNIT_ASSERT(m_state == State::RUN_CORRECT_FOLLOW);
@@ -191,7 +203,7 @@ void BaseFunFollowMgr::StartHeartbeatTest()
 	m_tm.StartTimer(1*1000, f);
 }
 
-void BaseFunFollowMgr::CheckBearHeatEnd()
+void BaseFunTestMgr::CheckBearHeatEnd()
 {
 	//验收再测试状态，因为client, svr,是网络消息接收才改变最后状态，不同步
 	auto f = [&]()
@@ -206,17 +218,23 @@ void BaseFunFollowMgr::CheckBearHeatEnd()
 	m_tm.StartTimer(1 * 1000, f);
 }
 
-void BaseFunFollowMgr::StartCheckBD()
+void BaseFunTestMgr::StartCheckBD()
 {
 	m_state = State::RUN_BROADCAST_DISCON;
 	m_svr1.m_svr_cb = &m_bd_svr;
 	m_bd_svr.Start();
 }
 
-void BaseFunFollowMgr::StartCheckRoute()
+void BaseFunTestMgr::StartCheckRoute()
 {
 	m_state = State::RUN_ROUTE;
 	UNIT_INFO("start RUN_ROUTE");
+	m_route_client.Start();
+}
+
+void BaseFunTestMgr::End()
+{
+	UNIT_INFO("--------------------base test end--------------------");
 }
 
 void BaseClient::SendStr(uint32 cmd, const std::string &msg)
@@ -241,7 +259,7 @@ void BaseClient::OnRecv(const lc::MsgPack &msg)
 	OnRecvMsg(cmd, str);
 }
 
-HearBeatClient::HearBeatClient(BaseFunFollowMgr &mgr)
+HearBeatClient::HearBeatClient(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
 	m_state = State::WAIT_VERFIY_RSP;
@@ -284,7 +302,7 @@ void HearBeatClient::OnDisconnected()
 	UNIT_INFO("client beat timeout, disconnted");
 }
 
-HearBeatSvr::HearBeatSvr(BaseFunFollowMgr &mgr)
+HearBeatSvr::HearBeatSvr(BaseFunTestMgr &mgr)
 	: m_mgr(mgr)
 {
 	m_state = State::WAIT_VERFIY_REQ;
@@ -337,7 +355,7 @@ void HearBeatSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint
 
 }
 
-BDClient::BDClient(BaseFunFollowMgr &mgr)
+BDClient::BDClient(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
 	m_id = 0;
@@ -377,7 +395,7 @@ void BDClient::OnDisconnected()
 	UNIT_INFO("diconnect BDClient. idx=%d", m_id);
 }
 
-BDSvr::BDSvr(BaseFunFollowMgr &mgr)
+BDSvr::BDSvr(BaseFunTestMgr &mgr)
 	: m_mgr(mgr)
 {
 	m_state = State::WAIT_ALL_CLIENT_CONNECT;
@@ -512,20 +530,87 @@ void BDSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr
 
 }
 
-RouteClient::RouteClient(BaseFunFollowMgr &mgr)
+RouteClient::RouteClient(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
+	m_state = State::WAIT_VERIFY_OK;
+	m_tmp1 = 0;
+	m_tmp2 = 0;
+}
 
+void RouteClient::Start()
+{
+	UNIT_ASSERT(m_state == State::WAIT_VERIFY_OK);
+
+	m_mgr.m_svr1.m_svr_cb = &m_mgr.m_route_svr1;
+	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	UNIT_ASSERT(ex_vec.size() > 1);
+	UNIT_ASSERT(ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
+}
+
+void RouteClient::SvrRev(uint16 svr_id, uint32 cmd)
+{
+	if (State::WAIT_NORMAL_MSG_REV == m_state)
+	{
+		if (1 == svr_id)
+		{
+			UNIT_ASSERT(cmd == CMD_SVR1_MSG);
+			m_tmp1 = 1;
+		}
+		else if (2 == svr_id)
+		{
+			UNIT_ASSERT(cmd == CMD_SVR2_MSG);
+			m_tmp2 = 1;
+		}
+
+		if (m_tmp1 == 1 && 1 == m_tmp2)
+		{
+			m_state = State::WAIT_CHANGE_ROUTE_MSG_REV;
+			UNIT_INFO("change route msg, send svr3 msg to svr2. wait rev");
+			m_mgr.m_route_svr1.ChangeRoute();
+
+			auto f = [&]()
+			{
+				SendStr(CMD_SVR3_MSG, "msg");
+			};
+			m_tm.StopTimer();
+			m_tm.StartTimer(1 * 1000, f);
+		}
+	}
+	else if (State::WAIT_CHANGE_ROUTE_MSG_REV == m_state)
+	{
+		UNIT_ASSERT(CMD_SVR3_MSG == cmd);
+		UNIT_ASSERT(2 == svr_id);
+		m_state = State::END;
+		m_mgr.End();
+	}
+	else
+	{
+		UNIT_ASSERT(false);
+	}
 }
 
 void RouteClient::OnRecvMsg(uint32 cmd, const std::string &msg)
 {
-
+	if (CMD_VERIFY == cmd)
+	{
+		UNIT_ASSERT(m_state == State::WAIT_VERIFY_OK);
+		UNIT_INFO("verify ok");
+		m_state = State::WAIT_NORMAL_MSG_REV;
+		SendStr(CMD_SVR1_MSG, "msg");
+		SendStr(CMD_SVR2_MSG, "msg");
+		m_tmp1 = 0;
+		m_tmp2 = 0;
+	}
+	else if (CMD_SVR1_MSG == cmd)
+	{
+	}
 }
 
 void RouteClient::OnConnected()
 {
-
+	UNIT_INFO("OnConnected");
+	SendStr(CMD_VERIFY, "verify");
 }
 
 void RouteClient::OnDisconnected()
@@ -533,10 +618,17 @@ void RouteClient::OnDisconnected()
 
 }
 
-RouteSvr::RouteSvr(BaseFunFollowMgr &mgr)
+RouteSvr::RouteSvr(BaseFunTestMgr &mgr)
 	: m_mgr(mgr)
 {
+	m_svr_id = 0;
+}
 
+void RouteSvr::ChangeRoute()
+{
+	UNIT_INFO("cid=%llx", m_sid.cid);
+	UNIT_ASSERT(m_sid.cid != 0);
+	m_mgr.m_svr2.SetMainCmd2Svr(m_sid, BF_SVR3, BF_SVR2);
 }
 
 void RouteSvr::OnRegResult(uint16 svr_id)
@@ -546,12 +638,19 @@ void RouteSvr::OnRegResult(uint16 svr_id)
 
 void RouteSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
+	m_sid = id;
+	UNIT_INFO("svr rev msg. m_svr_id =%d cmd=%x id.cid=%llx", m_svr_id, cmd, id.cid);
+	m_mgr.m_route_client.SvrRev(m_svr_id, cmd);
 
 }
 
 void RouteSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
-
+	UNIT_ASSERT(CMD_VERIFY == cmd);
+	string s(msg, msg_len);
+	UNIT_ASSERT(s == "verify");
+	string rsp_msg = "verify_ok";
+	m_mgr.m_svr1.ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
 }
 
 void RouteSvr::OnClientDisCon(const SessionId &id)
@@ -566,7 +665,7 @@ void RouteSvr::OnClientConnect(const SessionId &id)
 
 void RouteSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
 {
-
+	UNIT_INFO("OnSetMainCmd2SvrRsp %d %d", main_cmd, svr_id);
 }
 
 

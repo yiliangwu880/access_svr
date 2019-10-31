@@ -32,9 +32,10 @@ namespace
 		}
 	};
 	MyFollowTest g_base_follow_mgr;
+
 }
 
-UNITTEST(test_combine)
+UNITTEST(cd)
 {
 	UNIT_ASSERT(CfgMgr::Obj().Init());
 	EventMgr::Obj().Init();
@@ -44,5 +45,5 @@ UNITTEST(test_combine)
 
 	EventMgr::Obj().Dispatch();
 
-	UNIT_INFO("--------------------test_combine end--------------------");
+	UNIT_ASSERT(g_base_follow_mgr.m_svr.m_state == BaseFlowSvr::State::END);
 }

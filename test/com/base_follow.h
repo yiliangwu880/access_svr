@@ -8,8 +8,10 @@
 #include <array>
 #include "test_base_fun.h"
 
-class BaseFunFollowMgr;
+class BaseFunTestMgr;
 static  const uint16 BF_SVR1 = 1;
+static  const uint16 BF_SVR2 = 2;
+static  const uint16 BF_SVR3 = 3;
 
 class BaseClient : public lc::ClientCon
 {
@@ -31,11 +33,11 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 
 public:
-	BaseFlowClient(BaseFunFollowMgr &mgr);
+	BaseFlowClient(BaseFunTestMgr &mgr);
 	virtual void OnRecv(const lc::MsgPack &msg) override final;
 	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) {};
 	virtual void OnConnected() override final;
@@ -57,11 +59,11 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 
 public:
-	BaseFlowSvr(BaseFunFollowMgr &mgr);
+	BaseFlowSvr(BaseFunTestMgr &mgr);
 
 	//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
 	//@svr_id = 0表示失败
@@ -98,11 +100,11 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 
 public:
-	HearBeatClient(BaseFunFollowMgr &mgr);
+	HearBeatClient(BaseFunTestMgr &mgr);
 	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) override final;
 	virtual void OnConnected() override final;
 	virtual void OnDisconnected() override final;
@@ -119,11 +121,11 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 
 public:
-	HearBeatSvr(BaseFunFollowMgr &mgr);
+	HearBeatSvr(BaseFunTestMgr &mgr);
 	void Start();
 	//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
 	//@svr_id = 0表示失败
@@ -159,12 +161,12 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 	uint32 m_id; //id,0开始，数组索引
 
 public:
-	BDClient(BaseFunFollowMgr &mgr);
+	BDClient(BaseFunTestMgr &mgr);
 	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) override final;
 	virtual void OnConnected() override final;
 	virtual void OnDisconnected() override final;
@@ -184,7 +186,7 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
 	std::set<uint64> m_client_set; //统计client集合
 	uint32 m_broadCmd_cnt;
@@ -192,7 +194,7 @@ public:
 	SessionId m_anyone_sid;
 	uint32 m_tmp_num;
 public:
-	BDSvr(BaseFunFollowMgr &mgr);
+	BDSvr(BaseFunTestMgr &mgr);
 	void Start();
 	void ClientOnConnected(uint32 idx);
 	void ClientRevBroadCmd();
@@ -228,15 +230,20 @@ public:
 	enum class State
 	{
 		WAIT_VERIFY_OK,
-		WAIT_SEND_SVR1,//wait svr1 rev msg, svr1 change route 
-		WAIT_SEND_SVR2,
+		WAIT_NORMAL_MSG_REV,//send svr1 svr2 msg, wait rev
+		WAIT_CHANGE_ROUTE_MSG_REV, //change route msg, send svr3 msg to svr2. wait rev
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
+	uint32 m_tmp1;
+	uint32 m_tmp2;
+	lc::Timer m_tm;
 public:
-	RouteClient(BaseFunFollowMgr &mgr);
+	RouteClient(BaseFunTestMgr &mgr);
+	void Start();
+	void SvrRev(uint16 svr_id, uint32 cmd);
 	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) override final;
 	virtual void OnConnected() override final;
 	virtual void OnDisconnected() override final;
@@ -251,10 +258,15 @@ public:
 		END,
 	};
 
-	BaseFunFollowMgr &m_mgr;
+	BaseFunTestMgr &m_mgr;
 	State m_state;
+	uint16 m_svr_id;
+	SessionId m_sid;
 public:
-	RouteSvr(BaseFunFollowMgr &mgr);
+	RouteSvr(BaseFunTestMgr &mgr);
+
+	void ChangeRoute();
+
 	//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
 	//@svr_id = 0表示失败
 	virtual void OnRegResult(uint16 svr_id);
@@ -278,7 +290,8 @@ public:
 	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
 };
 
-class BaseFunFollowMgr 
+//基本功能，流程测试
+class BaseFunTestMgr 
 {
 public:
 	enum class State
@@ -313,11 +326,12 @@ public:
 	AllADFacadeMgr m_svr1;
 	AllADFacadeMgr m_svr2;
 public:
-	BaseFunFollowMgr();
+	BaseFunTestMgr();
 	bool Init();
 	void StartHeartbeatTest();
 	void CheckBearHeatEnd();
 	void StartCheckBD();//TEST RUN_BROADCAST_DISCON
 	void StartCheckRoute();//TEST RUN_ROUTE
+	virtual void End();
 
 };

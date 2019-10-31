@@ -28,6 +28,7 @@ UnitTestMgr::Obj().Start();
 #include <vector>
 #include <stdarg.h>
 #include <map>
+#include "svr_util/include/log_file.h"
 
 class IUnitTest
 {
@@ -63,7 +64,8 @@ private:
 };
 
 #define UNIT_ERROR(x, ...)  UnitTestMgr::Obj().Printf( true, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define UNIT_INFO(x, ...)  UnitTestMgr::Obj().Printf( false, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+//#define UNIT_INFO(x, ...)  UnitTestMgr::Obj().Printf( false, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define UNIT_INFO(x, ...) su::LogMgr::Obj().Printf(su::LL_DEBUG, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
 
 #define UNIT_ASSERT(expression) do{  \
 				if(!(expression))                                                              \

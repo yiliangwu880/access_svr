@@ -73,6 +73,15 @@ Project "test_combine"
 		"../test/com/**",  
 	}
 	
+Project "test_add_acc"
+	includedirs { 
+		"../include/",
+	}
+
+	SrcPath { 
+		"../test/test_add_acc/**",  
+		"../test/com/**",  
+	}
     
     
     

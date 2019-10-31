@@ -50,10 +50,14 @@ function Init()
 	#remove all old log.
 	all_fold_name_list=(
 	f_test_combine
+	f_test_add_acc
+	svr1
+	svr2
+	svr3
 	)
     for v in ${all_fold_name_list[@]} ;do
 		echo $v
-		rm ./${v}/utLog.txt
+		rm ./${v}/OutLog.txt
 		rm ./${v}/svr_util_log.txt
     done
 }
@@ -61,11 +65,14 @@ function Init()
 function test_combine()
 {
 	KillProcess "acc_svr"
+	sleep 1
 	cd svr1
 	./acc_svr 
 	cd -
 	
 	sleep 1
+	
+	echo start test_combine
 	cd f_test_combine
 	./test_combine > OutLog.txt
 	cd -
@@ -78,115 +85,34 @@ function test_combine()
 	grep "ERROR\|error" ./svr1/svr_util_log.txt >>  error.txt 
 }
 
-function TestGroup()
+
+function test_add_acc()
 {
-	KillProcess "./acc_svr"
-	cd combine_svr
+	KillProcess "acc_svr"
+	sleep 1
+	cd svr1
+	./acc_svr 
+	cd -
+	cd svr2
 	./acc_svr 
 	cd -
 	
 	sleep 1
-	cd f_test_group
-	./test_group > OutLog.txt
+	echo start test_add_acc
+	cd f_test_add_acc
+	./test_add_acc > OutLog.txt
 	cd -
 	sleep 1
 	
-	KillProcess "./acc_svr"
-	echo test_group end
 	
-	grep "ERROR\|error" ./f_test_group/OutLog.txt >>  error.txt  #追加
-	grep "ERROR\|error" ./f_test_group/svr_util_log.txt >>  error.txt 
-	grep "ERROR\|error" ./combine_svr/svr_util_log.txt >>  error.txt 
+	KillProcess "./acc_svr"
+	echo test_add_acc end
+	
+	grep "ERROR\|error" ./f_test_combine/OutLog.txt >>  error.txt  #追加
+	grep "ERROR\|error" ./svr1/svr_util_log.txt >>  error.txt 
+	grep "ERROR\|error" ./svr2/svr_util_log.txt >>  error.txt 
 }
 
-
-
-function TestRecon()
-{
-	echo restart1
-	cd ReconSvr
-	StartDaemon ./acc_svr 
-	cd -
-	
-	sleep 2
-	StartDaemon ./test_recon
-	sleep 2
-	
-	#reconnect 1
-	echo cd ReconSvr
-	cd ReconSvr
-	echo restart2
-	KillProcess "./acc_svr"
-	sleep 1
-	StartDaemon ./acc_svr 
-	
-
-	#reconnect 2
-	echo restart3
-	sleep 3
-	KillProcess "./acc_svr"
-	sleep 1
-	StartDaemon ./acc_svr 
-	
-	
-	sleep 1
-	KillProcess acc_svr
-	KillProcess test_recon
-	echo TestRecon end
-	cd -
-	grep "ERROR\|error" svr_util_log.txt >>  error.txt 
-	grep "ERROR\|error" lc_log.txt >>  error.txt 
-}
-
-function TestMoreMfSvr()
-{
-	 KillProcess "./acc_svr"
-	 cd FTestMoreSvr
-	 StartDaemon ./test_more_svr
-	 cd -
-	
-	sleep 2
-	cd svr1
-	StartDaemon ./acc_svr 
-	cd -
-	cd svr2
-	StartDaemon ./acc_svr 
-	cd -
-	cd svr3
-	StartDaemon ./acc_svr 
-	cd -
-	sleep 2
-	
-	#del two svr
-	KillOneProcess acc_svr
-	KillOneProcess acc_svr
-	sleep 4
-	#start two svr
-	cd svr1
-	StartDaemon ./acc_svr 
-	cd -
-	cd svr2
-	StartDaemon ./acc_svr 
-	cd -
-	sleep 2
-	
-	#del old svr
-	KillOneProcess acc_svr
-	sleep 4
-	KillProcess test_more_svr
-	KillProcess "./acc_svr"
-	echo end
-	
-	cd FTestMoreSvr
-	grep "ERROR\|error" lc_log.txt >>  ../error.txt 
-	grep "ERROR\|error" svr_util_log.txt >>  ../error.txt 
-	cd -
-}
-
-function M1()
-{
-	echo "mmm"
-}
 #main follow
 ########################################################################################################
 #Init
@@ -194,6 +120,7 @@ if [ $# -lt 1 ];then
 	echo "run all"
 	Init
 	test_combine
+	test_add_acc
 else
     echo "run submodue" $1
 	Init
