@@ -121,6 +121,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 	if (nullptr == pSvr)
 	{
 		L_WARN("can't find verfify svr. maybe you havn't reg your verify svr.");
+		DisConnect();
 		return;
 	}
 
@@ -165,17 +166,20 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 	//真正处理转发
-	uint16 svr_id = 0;
 	uint16 main_cmd = f_msg.cmd >> 16;
+	uint16 svr_id = main_cmd;
 	{//get svr_id
 		auto it = m_cmd_2_svrid.find(main_cmd);
-		if (it == m_cmd_2_svrid.end())
-		{			svr_id = main_cmd;
-		}
-		else
+		if (it != m_cmd_2_svrid.end())
 		{
 			svr_id = it->second;
 		}
+	}
+	if (0 == svr_id)
+	{
+		L_WARN("invaild cmd %x. hight uint16 must can't be 0", f_msg.cmd);
+		DisConnect();
+		return;
 	}
 
 	L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, HeartbeatInfo::Obj().cmd, HeartbeatInfo::Obj().rsp_cmd);

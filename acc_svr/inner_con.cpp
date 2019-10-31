@@ -62,6 +62,7 @@ namespace
 		L_COND(ret, "parse ctrl msg fail");
 		MsgRspReg rsp;
 		rsp.svr_id = req.svr_id;
+		L_DEBUG("Parse_CMD_REQ_REG svr_id=%d, is_verify=%d", req.svr_id, req.is_verify);
 		if (!con.RegSvrId(req.svr_id))
 		{
 			L_WARN("reg fail, svr id=%d", req.svr_id);

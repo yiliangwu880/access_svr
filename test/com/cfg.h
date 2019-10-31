@@ -14,12 +14,16 @@ using namespace lc;
 class CfgMgr : public Singleton<CfgMgr>
 {
 public:
-	bool Init()
+	bool Init(const char *path_name = nullptr)
 	{
 		m_inner_vec.clear();
 		UNIT_INFO("init cfg");
 		su::Config cfg;
-		UNIT_ASSERT(cfg.init("./cfg.txt"));
+		if (nullptr == path_name)
+		{
+			path_name = "./cfg.txt";
+		}
+		UNIT_ASSERT(cfg.init(path_name));
 
 		std::string ip = "127.0.0.1";
 		m_inner_vec.push_back({ ip.c_str(), (uint16)cfg.GetInt("inner_port1") });

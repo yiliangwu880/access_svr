@@ -1,6 +1,6 @@
 # CMake 最低版本号要求
 cmake_minimum_required (VERSION 2.8)
-set(project_name "test_combine")
+set(project_name "test_add_acc")
 # 项目信息
 project (${project_name} CXX)
 

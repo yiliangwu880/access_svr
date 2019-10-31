@@ -44,6 +44,7 @@ function Init()
 	cp acc_svr ./svr2 -rf
 	cp acc_svr ./svr3 -rf
 	cp test_combine ./f_test_combine -rf
+	cp test_add_acc ./f_test_add_acc -rf
 	
 	rm error.txt
 
@@ -60,6 +61,12 @@ function Init()
 		rm ./${v}/OutLog.txt
 		rm ./${v}/svr_util_log.txt
     done
+}
+
+
+function clear()
+{
+	KillProcess "acc_svr"
 }
 
 function test_combine()
@@ -102,13 +109,13 @@ function test_add_acc()
 	cd f_test_add_acc
 	./test_add_acc > OutLog.txt
 	cd -
-	sleep 1
+	sleep 2
 	
-	
+
 	KillProcess "./acc_svr"
 	echo test_add_acc end
 	
-	grep "ERROR\|error" ./f_test_combine/OutLog.txt >>  error.txt  #追加
+	grep "ERROR\|error" ./f_test_add_acc/OutLog.txt >>  error.txt  #追加
 	grep "ERROR\|error" ./svr1/svr_util_log.txt >>  error.txt 
 	grep "ERROR\|error" ./svr2/svr_util_log.txt >>  error.txt 
 }
@@ -120,10 +127,7 @@ if [ $# -lt 1 ];then
 	echo "run all"
 	Init
 	test_combine
-	for((i=1;i<=30;i++)); do   
-	test_combine 
-	done  
-	#test_add_acc
+	test_add_acc
 else
     echo "run submodue" $1
 	Init

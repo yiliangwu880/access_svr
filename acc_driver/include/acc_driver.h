@@ -92,24 +92,27 @@ namespace acc {
 		//@svr_id = 0表示失败
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
-		//接收client消息包到svr
-		virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
-
-		//接收client消息包.请求认证的包
-		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
-
-		//client断线通知
-		virtual void OnClientDisCon(const SessionId &id) = 0;
-
-		//client认证成功，创建会话。 概念类似 新socket连接客户端
-		virtual void OnClientConnect(const SessionId &id) = 0;
-
 		//设置会话自定义映射main_cmd to svr_id
 		//@id 请求参数一样
 		//@main_cmd 请求参数一样
 		//@svr_id 0 表示失败。
 		//参考 SetMainCmd2Svr
-		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
+		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+
+		//接收client消息包.请求认证的包
+		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+
+		//接收client消息包到svr
+		virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+
+		//client断线通知
+		virtual void OnClientDisCon(const SessionId &id);
+
+		//client认证成功，创建会话。 概念类似 新socket连接客户端
+		virtual void OnClientConnect(const SessionId &id);
+
+		//acc 断线通知
+		virtual void OnAccDisCon(const std::string &ip, uint16 port);
 
 	};
 

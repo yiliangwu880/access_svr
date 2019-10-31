@@ -54,6 +54,7 @@ void acc::ADClientCon::OnConnected()
 		const MsgReqSetHeartbeatInfo &req = m_con_mgr.GetHeartbeatInfo();
 		if (req.cmd != 0)
 		{
+			L_DEBUG("OnConnected. send heartbeat info. %d %d %d", req.cmd, req.rsp_cmd, req.interval_sec);
 			Send(CMD_REQ_SET_HEARTBEAT_INFO, req);
 		}
 	}
@@ -66,6 +67,10 @@ void acc::ADClientCon::OnDisconnected()
 	auto f = std::bind(&ADClientCon::OnTryReconTimeOut, this);
 	m_recon_tm.StopTimer();
 	m_recon_tm.StartTimer(RE_CON_INTERVAL_SEC*1000, f);
+	string ip;
+	uint16 port;
+	GetRemoteAddr(ip, port);
+	m_facade.OnAccDisCon(ip, port);
 }
 
 const acc::Session *acc::ADClientCon::FindSession(const SessionId &id)
@@ -262,7 +267,7 @@ bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is
 	return true;
 }
 
-bool acc::ConMgr::AddAcc(const Addr &addr)
+bool acc::ConMgr::AddAcc(const Addr &addr, bool is_verify_svr)
 {
 	L_COND_F(!m_is_fatal);
 	L_COND_F(0 != m_svr_id, "must call  init before call AddAcc"); 
@@ -277,6 +282,7 @@ bool acc::ConMgr::AddAcc(const Addr &addr)
 			return false;
 		}
 	}
+
 	ADClientCon *p = new ADClientCon(m_facade, *this, m_vec_con.size());
 	if(!p->ConnectInit(addr.ip.c_str(), addr.port))
 	{
@@ -337,10 +343,16 @@ void acc::ConMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_s
 
 	for (ADClientCon *p : m_vec_con)
 	{
-		if (p->IsConnect())
+		if (!p->IsConnect())
 		{
-			p->Send(CMD_REQ_SET_HEARTBEAT_INFO, m_heartbeat_info);
+			continue;
 		}
+		if (m_heartbeat_info.cmd == 0)
+		{
+			continue;
+		}
+		//L_DEBUG("send heartbeat info to port =%d", p->GetRemotePort());
+		p->Send(CMD_REQ_SET_HEARTBEAT_INFO, m_heartbeat_info);
 	}
 }
 

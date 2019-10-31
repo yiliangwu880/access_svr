@@ -157,6 +157,7 @@ namespace acc {
 	//	svr请求，设定心跳检查功能，心跳包信息{cmd, interval, rsp cmd}
 	struct  MsgReqSetHeartbeatInfo
 	{
+		MsgReqSetHeartbeatInfo();
 		uint32 cmd;		//客户端请求消息号
 		uint32 rsp_cmd; //响应给客户端额消息号
 		uint64 interval_sec;

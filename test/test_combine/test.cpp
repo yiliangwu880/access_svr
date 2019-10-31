@@ -22,6 +22,7 @@ using namespace lc;
 namespace
 {
 
+
 	class MyFollowTest : public BaseFunTestMgr
 	{
 	public:

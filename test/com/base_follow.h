@@ -20,6 +20,8 @@ public:
 
 	virtual void OnRecv(const lc::MsgPack &msg) override;
 	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) = 0;
+	virtual void OnConnected() {};
+	virtual void OnDisconnected() {};
 };
 
 class BaseFlowClient : public BaseClient

@@ -243,3 +243,11 @@ bool acc::MsgReqVerifyRet::Serialize(std::string &tcp_pack) const
 	tcp_pack.append((const char *)&is_success, sizeof(is_success));
 	return forward_msg.Serialize(tcp_pack);
 }
+
+acc::MsgReqSetHeartbeatInfo::MsgReqSetHeartbeatInfo()
+	:cmd(0)
+	,rsp_cmd(0)
+	,interval_sec(0)
+{
+
+}
