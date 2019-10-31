@@ -68,7 +68,7 @@ void acc::ADClientCon::OnDisconnected()
 	m_recon_tm.StopTimer();
 	m_recon_tm.StartTimer(RE_CON_INTERVAL_SEC*1000, f);
 	string ip;
-	uint16 port;
+	uint16 port=0;
 	GetRemoteAddr(ip, port);
 	m_facade.OnAccDisCon(ip, port);
 }
