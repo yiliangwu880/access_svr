@@ -359,6 +359,7 @@ BDClient::BDClient(BaseFunTestMgr &mgr)
 	:m_mgr(mgr)
 {
 	m_id = 0;
+	m_state = State::END;
 }
 
 void BDClient::OnRecvMsg(uint32 cmd, const std::string &msg)
@@ -622,6 +623,7 @@ RouteSvr::RouteSvr(BaseFunTestMgr &mgr)
 	: m_mgr(mgr)
 {
 	m_svr_id = 0;
+	m_state = State::END;
 }
 
 void RouteSvr::ChangeRoute()

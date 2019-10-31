@@ -25,24 +25,26 @@ namespace
 	class MyFollowTest : public BaseFunTestMgr
 	{
 	public:
+		virtual ~MyFollowTest() {};
 		virtual void End()
 		{
 			UNIT_INFO("--------------------MyFollowTest test end--------------------");
 			EventMgr::Obj().StopDispatch();
 		}
 	};
-	MyFollowTest g_base_follow_mgr;
+	MyFollowTest *g_base_follow_mgr;
 }
 
 UNITTEST(test_combine)
 {
 	UNIT_ASSERT(CfgMgr::Obj().Init());
 	EventMgr::Obj().Init();
-
-	bool r = g_base_follow_mgr.Init();
+	g_base_follow_mgr = new MyFollowTest;
+	bool r = g_base_follow_mgr->Init();
 	UNIT_ASSERT(r);
 
 	EventMgr::Obj().Dispatch();
 
 	UNIT_INFO("--------------------test_combine end--------------------");
+	delete g_base_follow_mgr;
 }

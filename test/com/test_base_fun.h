@@ -44,6 +44,7 @@ public:
 class AllADFacadeMgr : public acc::ADFacadeMgr 
 {
 public:
+	AllADFacadeMgr();
 	ISvrCallBack *m_svr_cb;//因为 ADFacadeMgr智能有一个对象，需要多种行为，就间接一层.
 
 	//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。

@@ -120,7 +120,10 @@ if [ $# -lt 1 ];then
 	echo "run all"
 	Init
 	test_combine
-	test_add_acc
+	for((i=1;i<=30;i++)); do   
+	test_combine 
+	done  
+	#test_add_acc
 else
     echo "run submodue" $1
 	Init

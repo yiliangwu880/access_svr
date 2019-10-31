@@ -47,6 +47,9 @@ namespace acc {
 	//外观模式，acc driver 接口
 	class ADFacadeMgr 
 	{
+	private:
+		ConMgr &m_con_mgr; //具体状态，和对外接口分离
+
 	public:
 		ADFacadeMgr();
 		~ADFacadeMgr();
@@ -108,8 +111,6 @@ namespace acc {
 		//参考 SetMainCmd2Svr
 		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
 
-	private:
-		ConMgr &m_con_mgr; //具体状态，和对外接口分离
 	};
 
 
