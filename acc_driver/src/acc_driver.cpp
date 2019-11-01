@@ -62,6 +62,22 @@ bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32
 	return con->SendPack(tcp_pack);
 }
 
+bool acc::ADFacadeMgr::BroadcastUinToSession(const SessionId &id, uint64 uin)
+{
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	L_COND_F(nullptr != con->FindSession(id), "can't find session");
+	MsgBroadcastUin req;
+	req.uin = uin;
+	req.cid = id.cid;
+
+	string tcp_pack;
+	L_COND_F(ASMsg::Serialize(CMD_REQ_BROADCAST_UIN, req, tcp_pack));
+
+	return con->SendPack(tcp_pack.c_str(), tcp_pack.length());
+}
+
 bool acc::ADFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);

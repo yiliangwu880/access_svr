@@ -39,6 +39,8 @@ public:
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) = 0;
+
+	virtual void OnRevBroadcastUinToSession(uint64 uin) {};
 };
 
 class AllADFacadeMgr : public acc::ADFacadeMgr 
@@ -79,6 +81,9 @@ public:
 	//参考 SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) {
 		m_svr_cb->OnSetMainCmd2SvrRsp(session, main_cmd, svr_id);
+	}
+	virtual void OnRevBroadcastUinToSession(uint64 uin) {
+		m_svr_cb->OnRevBroadcastUinToSession(uin);
 	}
 };
 

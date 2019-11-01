@@ -75,6 +75,9 @@ namespace acc {
 		//请求验证结果. 
 		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);
 
+		//一个svr向所有svr的指定会话广播uin
+		bool BroadcastUinToSession(const SessionId &id, uint64 uin);
+
 		//发送消息包到client
 		bool SendToClient(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
@@ -121,6 +124,9 @@ namespace acc {
 
 		//acc 断线通知
 		virtual void OnAccDisCon(const std::string &acc_ip, uint16 acc_port);
+
+		//当设置uin
+		virtual void OnRevBroadcastUinToSession(uint64 uin) {};
 
 	};
 

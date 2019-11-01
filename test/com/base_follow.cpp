@@ -151,11 +151,18 @@ BaseFunTestMgr::BaseFunTestMgr()
 	,m_route_svr1(*this)
 	, m_route_svr2(*this)
 	, m_route_client(*this)
+	, m_b_svr1(*this)
+	, m_b_svr2(*this)
+	, m_b_svr3(*this)
+	, m_b_client(*this)
 
 {
 	m_state = State::RUN_CORRECT_FOLLOW;
 	m_route_svr1.m_svr_id = 1;
 	m_route_svr2.m_svr_id = 2;
+	m_b_svr1.m_svr_id = 1;
+	m_b_svr2.m_svr_id = 2;
+	m_b_svr3.m_svr_id = 3;
 }
 
 
@@ -173,11 +180,13 @@ bool BaseFunTestMgr::Init()
 
 	UNIT_ASSERT(m_svr2.Init(vec, 2));
 	m_svr2.m_svr_cb = &m_route_svr2;
+
+	UNIT_ASSERT(m_svr3.Init(vec, 3));
+	m_svr3.m_svr_cb = &m_b_svr3;
+
+	
 	UNIT_ASSERT(m_client.ConnectInit(ex_addr.ip.c_str(), ex_addr.port));
-	//{
-	//	UNIT_INFO("tmp test");
-	//	StartCheckRoute();
-	//}
+
 	return true;
 
 }
@@ -230,6 +239,15 @@ void BaseFunTestMgr::StartCheckRoute()
 	m_state = State::RUN_ROUTE;
 	UNIT_INFO("start RUN_ROUTE");
 	m_route_client.Start();
+}
+
+
+void BaseFunTestMgr::StartCheckBroadcastUin()
+{
+	m_state = State::RUN_BROADCAST_UIN;
+	UNIT_INFO("start RUN_BROADCAST_UIN");
+
+	m_b_client.Start();
 }
 
 void BaseFunTestMgr::End()
@@ -584,7 +602,7 @@ void RouteClient::SvrRev(uint16 svr_id, uint32 cmd)
 		UNIT_ASSERT(CMD_SVR3_MSG == cmd);
 		UNIT_ASSERT(2 == svr_id);
 		m_state = State::END;
-		m_mgr.End();
+		m_mgr.StartCheckBroadcastUin();
 	}
 	else
 	{
@@ -672,3 +690,128 @@ void RouteSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint
 }
 
 
+BroadcastUinSvr::BroadcastUinSvr(BaseFunTestMgr &mgr)
+	:m_mgr(mgr)
+{
+	
+}
+
+
+void BroadcastUinSvr::BroadcastUin(uint64 uin)
+{
+	AllADFacadeMgr &facade = GetFacade();
+	UNIT_ASSERT(m_sid.cid != 0);
+	facade.BroadcastUinToSession(m_sid, uin);
+}
+
+
+AllADFacadeMgr & BroadcastUinSvr::GetFacade()
+{
+	if (m_svr_id == 1)
+	{
+		return m_mgr.m_svr1;
+	}
+	else if (m_svr_id == 2)
+	{
+		return m_mgr.m_svr2;
+	}
+	else if (m_svr_id == 3)
+	{
+		return m_mgr.m_svr3;
+	}
+	else
+	{
+		UNIT_ASSERT(false);
+		return m_mgr.m_svr3;
+	}
+}
+
+
+void BroadcastUinSvr::OnRevBroadcastUinToSession(uint64 uin)
+{
+	UNIT_INFO("rev uin=%llx, svr_id=%d", uin, m_svr_id);
+	m_mgr.m_b_client.SvrRevUin(m_svr_id, uin);
+}
+
+void BroadcastUinSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+{
+	UNIT_ASSERT(CMD_VERIFY == cmd);
+	string s(msg, msg_len);
+	UNIT_ASSERT(s == "verify");
+	string rsp_msg = "verify_ok";
+
+	m_sid = id;
+	AllADFacadeMgr &facade = GetFacade();
+	facade.ReqVerifyRet(id, true, CMD_VERIFY, rsp_msg.c_str(), rsp_msg.length());
+}
+
+BroadcastUinClient::BroadcastUinClient(BaseFunTestMgr &mgr)
+	:m_mgr(mgr)
+{
+	m_state = State::WAIT_VERIFY_OK;
+	m_svr2_rev = false;
+	m_svr3_rev = false;
+	m_uin = 0xfff00f00;
+}
+
+void BroadcastUinClient::Start()
+{
+	UNIT_ASSERT(m_state == State::WAIT_VERIFY_OK);
+
+	m_mgr.m_svr1.m_svr_cb = &m_mgr.m_b_svr1;
+	m_mgr.m_svr2.m_svr_cb = &m_mgr.m_b_svr2;
+	m_mgr.m_svr3.m_svr_cb = &m_mgr.m_b_svr3;
+
+	//connect to acc1
+	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	UNIT_ASSERT(ex_vec.size() > 2);
+	UNIT_ASSERT(ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
+
+}
+
+
+void BroadcastUinClient::SvrRevUin(uint16 svr_id, uint64 uin)
+{
+	UNIT_ASSERT(m_state == State::WAIT_BROADCAST);
+	UNIT_ASSERT(uin == m_uin);
+	if (svr_id == 2)
+	{
+		m_svr2_rev = true;
+	}
+	else if (svr_id == 3)
+	{
+		m_svr3_rev = true;
+	}
+	else
+	{
+		UNIT_ASSERT(false);
+	}
+	if (m_svr2_rev && m_svr3_rev)
+	{
+		m_state = State::END;
+		UNIT_INFO("svr2 svr3 rev uin, broadcast uin test end");
+		m_mgr.End();
+	}
+}
+
+void BroadcastUinClient::OnRecvMsg(uint32 cmd, const std::string &msg)
+{
+	if (CMD_VERIFY == cmd)
+	{
+		UNIT_ASSERT(m_state == State::WAIT_VERIFY_OK);
+		UNIT_INFO("verify ok");
+		m_state = State::WAIT_BROADCAST;
+		m_mgr.m_b_svr1.BroadcastUin(m_uin);
+	}
+}
+
+void BroadcastUinClient::OnConnected()
+{
+	UNIT_INFO("OnConnected");
+	SendStr(CMD_VERIFY, "verify");
+}
+
+void BroadcastUinClient::OnDisconnected()
+{
+	UNIT_INFO("OnDisconnected");
+}

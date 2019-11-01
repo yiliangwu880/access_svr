@@ -49,8 +49,8 @@
 		最大连接client数,由svr(认证服务器)请求修改。
 		svr请求，设定心跳检查功能，心跳包信息{cmd, interval, rsp msg}
 		svr请求广播client,分全体和部分
-		不保存用户id uin, 需要广播用cid识别。 查找uin对应那个Session，是svr群之间的事情。
-		svr 广播信息到所有svr指定会话，比如用来设定： 登录的uin.   (中心转发，比svr之间网状转发简单。)
+		保存用户id,uin， svr重启，恢复svr会话信息的uin.
+		svr 广播指定会话UIN到所有svr. 比如用来设定： 登录的uin.   (中心转发，比svr之间网状转发简单。)
 	}
 	
 	ad:
@@ -114,6 +114,7 @@ acc不需要id,避免配置麻烦。它的ip:port就是id
 	{
 		struct Session{
 			uint64 cid; //acc的connect id
+			uint64 uin; //登录后玩家id
 			enum State
 			{
 				Wait_FIRST_msg, //等client第一条消息。

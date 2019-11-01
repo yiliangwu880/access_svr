@@ -2,8 +2,8 @@
 inner_port1=6511	
 ex_port1=6512
 #acc svr2侦听地址
-inner_port2=6531	
-ex_port2=6532
+inner_port2=6521	
+ex_port2=6522
 #acc svr3侦听地址
 inner_port3=6531	
 ex_port3=6532

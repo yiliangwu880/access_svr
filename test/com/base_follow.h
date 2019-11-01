@@ -292,6 +292,70 @@ public:
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
+
+class BroadcastUinClient : public BaseClient
+{
+public:
+	enum class State
+	{
+		WAIT_VERIFY_OK,
+		WAIT_BROADCAST, //svr1 broadcast uin to svr2 svr3 ,wait rev all
+		END,
+	};
+
+	BaseFunTestMgr &m_mgr;
+	State m_state;
+	bool m_svr2_rev;
+	bool m_svr3_rev;
+	uint64 m_uin;
+public:
+	BroadcastUinClient(BaseFunTestMgr &mgr);
+	void Start();
+	void SvrRevUin(uint16 svr_id, uint64 uin);
+
+	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) override final;
+	virtual void OnConnected() override final;
+	virtual void OnDisconnected() override final;
+};
+
+
+class BroadcastUinSvr : public ISvrCallBack
+{
+public:
+
+	BaseFunTestMgr &m_mgr;
+	uint16 m_svr_id;
+	SessionId m_sid;
+public:
+	BroadcastUinSvr(BaseFunTestMgr &mgr);
+	void BroadcastUin(uint64 uin);
+	AllADFacadeMgr &GetFacade();
+
+	virtual void OnRevBroadcastUinToSession(uint64 uin) ;
+	//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
+	//@svr_id = 0表示失败
+	virtual void OnRegResult(uint16 svr_id) {};
+
+	//接收client消息包到svr
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) {};
+
+	//接收client消息包.请求认证的包
+	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+
+	//client断线通知
+	virtual void OnClientDisCon(const SessionId &id) {};
+
+	//client接入，创建会话。 概念类似 新socket连接客户端
+	virtual void OnClientConnect(const Session &session) {};
+
+	//@id 请求参数一样
+	//@main_cmd 请求参数一样
+	//@svr_id 0 表示失败。
+	//参考 SetMainCmd2Svr
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) {};
+};
+
+
 //基本功能，流程测试
 class BaseFunTestMgr 
 {
@@ -302,6 +366,7 @@ public:
 		RUN_HEARBEAT,
 		RUN_BROADCAST_DISCON, //测试广播，踢人
 		RUN_ROUTE,//路由设置
+		RUN_BROADCAST_UIN,
 		END,
 	};
 
@@ -323,10 +388,17 @@ public:
 	RouteSvr m_route_svr2;
 	RouteClient m_route_client;
 
+	//step5 test broadcast uin
+	BroadcastUinSvr m_b_svr1;
+	BroadcastUinSvr m_b_svr2;
+	BroadcastUinSvr m_b_svr3;
+	BroadcastUinClient m_b_client;
+
 	State m_state;
 	lc::Timer m_tm;
 	AllADFacadeMgr m_svr1;
 	AllADFacadeMgr m_svr2;
+	AllADFacadeMgr m_svr3;
 public:
 	BaseFunTestMgr();
 	bool Init();
@@ -334,6 +406,7 @@ public:
 	void CheckBearHeatEnd();
 	void StartCheckBD();//TEST RUN_BROADCAST_DISCON
 	void StartCheckRoute();//TEST RUN_ROUTE
+	void StartCheckBroadcastUin();
 	virtual void End();
 
 };

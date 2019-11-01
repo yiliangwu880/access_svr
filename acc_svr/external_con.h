@@ -41,6 +41,7 @@ private:
 	MainCmd2SvrId m_cmd_2_svrid;//有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id. 比如MMORPG,多个场景进程。
 	lc::Timer m_verify_tm;		//认证超时定时器
 	lc::Timer m_heartbeat_tm;	//心跳超时定时器
+	uint64 m_uin; //玩家标识
 
 public:
 	ExternalSvrCon();
@@ -50,6 +51,8 @@ public:
 	//发送 client和svr层：cmd,msg 到client
 	bool SendMsg(uint32 cmd, const char *msg, uint16 msg_len);
 	void SetMainCmd2SvrId(uint16 main_cmd, uint16 svr_id);
+	uint64 GetUin()const { return m_uin; }
+	void SetUin(uint64 uin) { m_uin = uin; }
 private:
 	virtual void OnRecv(const lc::MsgPack &msg) override;
 	virtual void OnConnected() override

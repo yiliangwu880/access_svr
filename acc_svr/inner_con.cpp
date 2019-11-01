@@ -110,7 +110,7 @@ namespace
 		{
 			InnerSvrCon *pCon = dynamic_cast<InnerSvrCon *>(&con);
 			L_COND(pCon);
-			if (0 != pCon->GetSvrId())
+			if (pCon->IsReg())
 			{
 				pCon->Send(CMD_NTF_CREATE_SESSION, ntf);
 			}
@@ -118,7 +118,43 @@ namespace
 		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
 
 	}
+	void Parse_CMD_REQ_BROADCAST_UIN(InnerSvrCon &con, const acc::ASMsg &msg)
+	{
+		MsgBroadcastUin req;
+		bool ret = CtrlMsgProto::Parse(msg, req);
+		L_COND(ret, "parse ctrl msg fail");
+		//L_DEBUG("Parse_CMD_REQ_BROADCAST_UIN uin=%llx", req.uin);
+		if (req.cid == 0)
+		{
+			L_WARN("CMD_REQ_BROADCAST_UIN cid==0");
+			return;
+		}
+		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		if (nullptr == pClient)
+		{
+			L_DEBUG("client not exist");
+			return;
+		}
+		pClient->SetUin(req.uin);
 
+		//通知 svr Uin
+		auto f = [&req, &con](SvrCon &f_con)
+		{
+			InnerSvrCon *pCon = dynamic_cast<InnerSvrCon *>(&f_con);
+			L_COND(pCon);
+			if (pCon == &con)
+			{
+				return;//不发送给来源svr
+			}
+			if (!pCon->IsReg())
+			{
+				return;
+			}
+			//L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%llx", req.uin);
+			pCon->Send(CMD_RSP_BROADCAST_UIN, req);
+		};
+		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
+	}
 	void Parse_CMD_REQ_SET_MAIN_CMD_2_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
 		MsgReqSetMainCmd2Svr req;
@@ -215,6 +251,7 @@ void SvrCtrlMsgDispatch::Init()
 	m_cmd_2_handle[CMD_REQ_DISCON]             = Parse_CMD_REQ_DISCON;
 	m_cmd_2_handle[CMD_REQ_DISCON_ALL]         = Parse_CMD_REQ_DISCON_ALL;
 	m_cmd_2_handle[CMD_REQ_SET_HEARTBEAT_INFO] = Parse_CMD_REQ_SET_HEARTBEAT_INFO;
+	m_cmd_2_handle[CMD_REQ_BROADCAST_UIN]	   = Parse_CMD_REQ_BROADCAST_UIN;
 }
 
 void SvrCtrlMsgDispatch::DispatchMsg(InnerSvrCon &con, const acc::ASMsg &msg)
@@ -272,14 +309,15 @@ bool InnerSvrCon::RegSvrId(uint16 id)
 
 	//通知创建会话
 	{
-		MsgNtfCreateSession ntf;
 		auto f = [&](SvrCon &con)
 		{
 			ExternalSvrCon *pCon = dynamic_cast<ExternalSvrCon *>(&con);
 			L_COND(pCon);
 			if (pCon->IsVerify())
 			{
+				MsgNtfCreateSession ntf;
 				ntf.cid = id;
+				ntf.uin = pCon->GetUin();
 				this->Send(CMD_NTF_CREATE_SESSION, ntf);
 			}
 		};

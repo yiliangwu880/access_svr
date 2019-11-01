@@ -76,6 +76,12 @@ function test_combine()
 	cd svr1
 	./acc_svr 
 	cd -
+	cd svr2
+	./acc_svr 
+	cd -
+	cd svr3
+	./acc_svr 
+	cd -
 	
 	sleep 1
 	

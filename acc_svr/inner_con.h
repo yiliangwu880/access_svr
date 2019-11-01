@@ -60,6 +60,7 @@ public:
 	bool RegSvrId(uint16 id);
 	//return 0 表示未注册
 	uint32 GetSvrId() const { return m_svr_id; }
+	bool IsReg() const {return m_svr_id != 0; }
 	void SetVerifySvr();
 	bool IsVerifySvr() const { return m_is_verify; }
 	//发送 acc::ASMsg

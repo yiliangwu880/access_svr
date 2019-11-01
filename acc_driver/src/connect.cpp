@@ -28,12 +28,13 @@ void ADClientCon::OnRecv(const lc::MsgPack &msg)
 
 	switch (as_data.cmd)
 	{
-	case CMD_RSP_REG               :HandleRspReg(as_data)              ; return;
-	case CMD_NTF_CREATE_SESSION    :HandleCreateSession(as_data)       ; return;
-	case CMD_NTF_VERIFY_REQ        :HandleVerifyReq(as_data)           ; return;
-	case CMD_NTF_FORWARD           :HandleMsgForward(as_data)          ; return;
-	case CMD_NTF_DISCON            :HandleMsgNtfDiscon(as_data)        ; return;
-	case CMD_RSP_SET_MAIN_CMD_2_SVR:HandleMsgRspSetMainCmd2Svr(as_data); return;
+	case CMD_RSP_REG				:HandleRspReg(as_data)              ; return;
+	case CMD_NTF_CREATE_SESSION		:HandleCreateSession(as_data)       ; return;
+	case CMD_NTF_VERIFY_REQ			:HandleVerifyReq(as_data)           ; return;
+	case CMD_NTF_FORWARD			:HandleMsgForward(as_data)          ; return;
+	case CMD_NTF_DISCON				:HandleMsgNtfDiscon(as_data)        ; return;
+	case CMD_RSP_SET_MAIN_CMD_2_SVR	:HandleMsgRspSetMainCmd2Svr(as_data); return;
+	case CMD_RSP_BROADCAST_UIN		:HandleMsgBroadcastUin(as_data); return;
 	default:
 		L_ERROR("unknow cmd. %d", as_data.cmd);
 		break;
@@ -199,6 +200,28 @@ void acc::ADClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
 	}
 
 	m_facade.OnSetMainCmd2SvrRsp(it->second, rsp.main_cmd, rsp.svr_id);
+}
+
+void acc::ADClientCon::HandleMsgBroadcastUin(const ASMsg &msg)
+{
+//	L_DEBUG("HandleMsgBroadcastUin");
+	MsgBroadcastUin rsp;
+	bool ret = CtrlMsgProto::Parse(msg, rsp);
+	L_COND(ret, "parse ctrl msg fail");
+	L_COND(rsp.cid);
+	SessionId id;
+	id.cid = rsp.cid;
+	id.acc_id = m_acc_id;
+	auto it = m_id_2_s.find(id.cid);
+	if (it == m_id_2_s.end())
+	{
+		L_WARN("can't find session. %lld %d", id.cid, id.acc_id);
+		return;
+	}
+
+	it->second.uin = rsp.uin;
+	//L_DEBUG("cb OnRevBroadcastUinToSession ");
+	m_facade.OnRevBroadcastUinToSession(rsp.uin);
 }
 
 void acc::ADClientCon::OnTryReconTimeOut()
