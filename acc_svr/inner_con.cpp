@@ -73,6 +73,7 @@ namespace
 			con.SetVerifySvr();
 		}
 		con.Send(CMD_RSP_REG, rsp);
+		con.RevertSession();
 	}
 
 	void Parse_CMD_REQ_VERIFY_RET(InnerSvrCon &con, const acc::ASMsg &msg)
@@ -123,7 +124,7 @@ namespace
 		MsgBroadcastUin req;
 		bool ret = CtrlMsgProto::Parse(msg, req);
 		L_COND(ret, "parse ctrl msg fail");
-		//L_DEBUG("Parse_CMD_REQ_BROADCAST_UIN uin=%llx", req.uin);
+		L_DEBUG("Parse_CMD_REQ_BROADCAST_UIN uin=%llx", req.uin);
 		if (req.cid == 0)
 		{
 			L_WARN("CMD_REQ_BROADCAST_UIN cid==0");
@@ -274,6 +275,7 @@ InnerSvrCon::InnerSvrCon()
 
 InnerSvrCon::~InnerSvrCon()
 {
+	L_DEBUG("destory svr, m_svr_id=%d", m_svr_id);
 	if (0 != m_svr_id)
 	{
 		if (!RegSvrMgr::Obj().Remove(m_svr_id))
@@ -292,6 +294,25 @@ InnerSvrCon::~InnerSvrCon()
 	}
 }
 
+void InnerSvrCon::RevertSession()
+{
+	//通知创建会话
+	auto f = [&](SvrCon &con)
+	{
+		ExternalSvrCon *pCon = dynamic_cast<ExternalSvrCon *>(&con);
+		L_COND(pCon);
+		if (pCon->IsVerify())
+		{
+			MsgNtfCreateSession ntf;
+			ntf.cid = pCon->GetId();
+			ntf.uin = pCon->GetUin();
+			L_DEBUG("CMD_NTF_CREATE_SESSION uin=%lld", ntf.uin);
+			this->Send(CMD_NTF_CREATE_SESSION, ntf);
+		}
+	};
+	Server::Obj().m_client_listener.GetConnMgr().Foreach(f);
+}
+
 bool InnerSvrCon::RegSvrId(uint16 id)
 {
 	L_COND_F(0 != id);
@@ -307,22 +328,7 @@ bool InnerSvrCon::RegSvrId(uint16 id)
 	}
 	m_svr_id = id;
 
-	//通知创建会话
-	{
-		auto f = [&](SvrCon &con)
-		{
-			ExternalSvrCon *pCon = dynamic_cast<ExternalSvrCon *>(&con);
-			L_COND(pCon);
-			if (pCon->IsVerify())
-			{
-				MsgNtfCreateSession ntf;
-				ntf.cid = id;
-				ntf.uin = pCon->GetUin();
-				this->Send(CMD_NTF_CREATE_SESSION, ntf);
-			}
-		};
-		Server::Obj().m_client_listener.GetConnMgr().Foreach(f);
-	}
+	
 
 	return true;
 }

@@ -120,6 +120,7 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 
 	Session s;
 	s.id.cid = rsp.cid;
+	s.uin = rsp.uin;
 	s.id.acc_id = m_acc_id;
 	bool r = m_id_2_s.insert(make_pair(s.id.cid, s)).second;
 	if (!r)

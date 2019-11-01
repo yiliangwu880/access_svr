@@ -30,19 +30,19 @@ namespace
 	static const uint32 CMD_VERIFY =  1;
 	static const uint32 CMD_TO_SVR = 1 << 16 | 2;
 
-	class AddAccFollow;
+	class FollowMgr;
 	//connect to acc2 client
 	class Acc2Client : public BaseClient
 	{
 	public:
-		AddAccFollow *m_follow;
+		FollowMgr *m_follow;
 		virtual void OnRecvMsg(uint32 cmd, const std::string &msg) override final;
 		virtual void OnConnected() override final;
 		virtual void OnDisconnected() override final;
 
 	};
 
-	class AddAccFollow : public acc::ADFacadeMgr
+	class FollowMgr : public acc::ADFacadeMgr
 	{
 	public:
 		enum class State
@@ -56,7 +56,7 @@ namespace
 		Acc2Client m_client;
 		lc::Timer m_tm;
 	public:
-		AddAccFollow();
+		FollowMgr();
 		void Init();
 		virtual void OnRegResult(uint16 svr_id);
 
@@ -93,13 +93,13 @@ namespace
 		m_follow->m_tm.StartTimer(2 * 1000, f);
 	}
 
-	AddAccFollow::AddAccFollow()
+	FollowMgr::FollowMgr()
 	{
 		m_state = State::WAIT_REG;
 		m_client.m_follow = this;
 	}
 
-	void AddAccFollow::Init()
+	void FollowMgr::Init()
 	{
 		std::vector<Addr> inner_vec = CfgMgr::Obj().m_inner_vec;
 		//const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
@@ -108,7 +108,7 @@ namespace
 	}
 
 
-	void AddAccFollow::OnRegResult(uint16 svr_id)
+	void FollowMgr::OnRegResult(uint16 svr_id)
 	{
 		UNIT_ASSERT(1 == svr_id);
 		if (State::WAIT_REG == m_state)
@@ -137,7 +137,7 @@ namespace
 	}
 
 
-	void AddAccFollow::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+	void FollowMgr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 	{
 		UNIT_ASSERT(CMD_VERIFY == cmd);
 		string s(msg, msg_len);
@@ -146,7 +146,7 @@ namespace
 	}
 
 
-	void AddAccFollow::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
+	void FollowMgr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 	{
 		UNIT_ASSERT(CMD_TO_SVR == cmd);
 		UNIT_INFO("rev msg from client to acc2, to svr");
@@ -162,7 +162,7 @@ UNITTEST(test_add_acc)
 	UNIT_ASSERT(CfgMgr::Obj().Init());
 	EventMgr::Obj().Init();
 
-	AddAccFollow follow;
+	FollowMgr follow;
 	follow.Init();
 
 	EventMgr::Obj().Dispatch();

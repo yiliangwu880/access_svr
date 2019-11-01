@@ -83,5 +83,15 @@ Project "test_add_acc"
 		"../test/com/**",  
 	}
     
+Project "test_svr_revert"
+	includedirs { 
+		"../include/",
+	}
+
+	SrcPath { 
+		"../test/test_svr_revert/**",  
+		"../test/com/**",  
+	}
+    
     
     

@@ -45,6 +45,7 @@ function Init()
 	cp acc_svr ./svr3 -rf
 	cp test_combine ./f_test_combine -rf
 	cp test_add_acc ./f_test_add_acc -rf
+	cp test_svr_revert ./f_test_svr_revert -rf
 	
 	rm error.txt
 
@@ -115,8 +116,6 @@ function test_add_acc()
 	cd f_test_add_acc
 	./test_add_acc > OutLog.txt
 	cd -
-	sleep 2
-	
 
 	KillProcess "./acc_svr"
 	echo test_add_acc end
@@ -126,12 +125,33 @@ function test_add_acc()
 	grep "ERROR\|error" ./svr2/svr_util_log.txt >>  error.txt 
 }
 
+function test_svr_revert()
+{
+	KillProcess "acc_svr"
+	sleep 1
+	cd svr1
+	./acc_svr 
+	cd -
+	
+	sleep 1
+	echo start test_svr_revert
+	cd f_test_svr_revert
+	./test_svr_revert > OutLog.txt
+	cd -
+
+	KillProcess "./acc_svr"
+	echo test_svr_revert end
+	
+	grep "ERROR\|error" ./f_test_svr_revert/OutLog.txt >>  error.txt  #追加
+	grep "ERROR\|error" ./svr1/svr_util_log.txt >>  error.txt 
+}
 #main follow
 ########################################################################################################
 #Init
 if [ $# -lt 1 ];then
 	echo "run all"
 	Init
+	test_svr_revert
 	test_combine
 	test_add_acc
 else

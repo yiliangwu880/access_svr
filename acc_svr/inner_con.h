@@ -58,6 +58,7 @@ public:
 	InnerSvrCon();
 	~InnerSvrCon();
 	bool RegSvrId(uint16 id);
+	void RevertSession(); //通知svr 恢复会话
 	//return 0 表示未注册
 	uint32 GetSvrId() const { return m_svr_id; }
 	bool IsReg() const {return m_svr_id != 0; }
