@@ -140,7 +140,7 @@ namespace
 	void FollowMgr::ReconSvr2()
 	{
 
-		auto f = [&]()
+		static auto f = [&]()
 		{
 			UNIT_INFO("WAIT_SVR2_RECON this=%p", this);
 			UNIT_ASSERT(m_state == FollowMgr::State::WAIT_SET_UIN_OK);

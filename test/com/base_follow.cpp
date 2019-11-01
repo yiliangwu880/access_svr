@@ -201,7 +201,7 @@ void BaseFunTestMgr::StartHeartbeatTest()
 	m_h_svr.Start();
 
 	//delay start client
-	auto f = [&]()
+	static auto f = [&]()
 	{
 		const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
 		UNIT_ASSERT(ex_vec.size() > 1);
@@ -215,7 +215,7 @@ void BaseFunTestMgr::StartHeartbeatTest()
 void BaseFunTestMgr::CheckBearHeatEnd()
 {
 	//验收再测试状态，因为client, svr,是网络消息接收才改变最后状态，不同步
-	auto f = [&]()
+	static auto f = [&]()
 	{
 		UNIT_ASSERT(m_state == State::RUN_HEARBEAT);
 		UNIT_ASSERT(m_h_svr.m_state == HearBeatSvr::State::END);
@@ -589,7 +589,7 @@ void RouteClient::SvrRev(uint16 svr_id, uint32 cmd)
 			UNIT_INFO("change route msg, send svr3 msg to svr2. wait rev");
 			m_mgr.m_route_svr1.ChangeRoute();
 
-			auto f = [&]()
+			static auto f = [&]()
 			{
 				SendStr(CMD_SVR3_MSG, "msg");
 			};

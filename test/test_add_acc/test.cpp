@@ -85,7 +85,7 @@ namespace
 	void Acc2Client::OnDisconnected()
 	{
 		UNIT_INFO("client discon, try again");
-		auto f = [&]()
+		static auto f = [&]()
 		{
 			TryReconnect();
 		};
@@ -121,7 +121,7 @@ namespace
 				AddAcc(inner_vec[1]);
 			}
 			m_state = State::WAIT_ADD_ACC_MSG;
-			auto f = [&]()
+			static auto f = [&]()
 			{
 				const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
 				UNIT_ASSERT(ex_vec.size() > 1);
