@@ -40,6 +40,13 @@ namespace acc {
 		uint64 cid;		//acc的connect id
 		uint32 acc_id; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
 		bool operator<(const SessionId &a) const;
+	};	
+	struct Session {
+		Session();
+		SessionId id;
+		std::string remote_ip;
+		uint16 remote_port;
+		uint64 uin; //登录后玩家id
 	};
 
 	class ConMgr;
@@ -92,27 +99,28 @@ namespace acc {
 		//@svr_id = 0表示失败
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
+		//接收client消息包.请求认证的包
+		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+
 		//设置会话自定义映射main_cmd to svr_id
 		//@id 请求参数一样
 		//@main_cmd 请求参数一样
 		//@svr_id 0 表示失败。
 		//参考 SetMainCmd2Svr
-		virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+		virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 
-		//接收client消息包.请求认证的包
-		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//接收client消息包到svr
-		virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+		virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//client断线通知
-		virtual void OnClientDisCon(const SessionId &id);
+		virtual void OnClientDisCon(const Session &session);
 
 		//client认证成功，创建会话。 概念类似 新socket连接客户端
-		virtual void OnClientConnect(const SessionId &id);
+		virtual void OnClientConnect(const Session &session);
 
 		//acc 断线通知
-		virtual void OnAccDisCon(const std::string &ip, uint16 port);
+		virtual void OnAccDisCon(const std::string &acc_ip, uint16 acc_port);
 
 	};
 

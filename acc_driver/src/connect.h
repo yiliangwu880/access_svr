@@ -18,12 +18,7 @@ namespace acc {
 
 	static const uint32 RE_CON_INTERVAL_SEC = 10; //x√Î≥¢ ‘÷ÿ¡¨
 
-	struct Session {
-		Session();
-		SessionId id;
-		std::string remote_ip;
-		uint16 remote_port;
-	};
+
 
 	using CId2Session = std::map<uint64, Session>;
 

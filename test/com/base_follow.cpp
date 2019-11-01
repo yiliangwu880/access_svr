@@ -108,13 +108,13 @@ void BaseFlowSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *ms
 
 }
 
-void BaseFlowSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+void BaseFlowSvr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	UNIT_ASSERT(CMD_MSG == cmd);
 	UNIT_ASSERT(State::WAIT_CLIENT_MSG == m_state);
 	string s(msg, msg_len);
 	UNIT_ASSERT(s == "msg");
-	m_mgr.m_svr1.SendToClient(id, cmd, msg, msg_len);
+	m_mgr.m_svr1.SendToClient(session.id, cmd, msg, msg_len);
 	m_state = State::WAIT_CLIENT_DISCON;
 }
 
@@ -130,12 +130,12 @@ void BaseFlowSvr::OnClientDisCon(const SessionId &id)
 	m_mgr.StartHeartbeatTest();
 }
 
-void BaseFlowSvr::OnClientConnect(const SessionId &id)
+void BaseFlowSvr::OnClientConnect(const Session &session)
 {
 	UNIT_ASSERT(State::WAIT_CLIENT_MSG == m_state);
 }
 
-void BaseFlowSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+void BaseFlowSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
 }
@@ -320,7 +320,7 @@ void HearBeatSvr::OnRegResult(uint16 svr_id)
 
 }
 
-void HearBeatSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+void HearBeatSvr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 {
 
 }
@@ -345,12 +345,12 @@ void HearBeatSvr::OnClientDisCon(const SessionId &id)
 	m_mgr.CheckBearHeatEnd();
 }
 
-void HearBeatSvr::OnClientConnect(const SessionId &id)
+void HearBeatSvr::OnClientConnect(const Session &session)
 {
 
 }
 
-void HearBeatSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+void HearBeatSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
 }
@@ -465,7 +465,7 @@ void BDSvr::OnRegResult(uint16 svr_id)
 {
 }
 
-void BDSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+void BDSvr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 {
 
 }
@@ -506,8 +506,9 @@ void BDSvr::OnClientDisCon(const SessionId &id)
 	}
 }
 
-void BDSvr::OnClientConnect(const SessionId &id)
+void BDSvr::OnClientConnect(const Session &session)
 {
+	SessionId id = session.id;
 	UNIT_ASSERT(m_state == State::WAIT_ALL_VERIFY_OK);
 	m_anyone_sid = id;
 	bool r = m_client_set.insert(id.cid).second;
@@ -526,7 +527,7 @@ void BDSvr::OnClientConnect(const SessionId &id)
 	}
 }
 
-void BDSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+void BDSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
 }
@@ -638,10 +639,10 @@ void RouteSvr::OnRegResult(uint16 svr_id)
 
 }
 
-void RouteSvr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+void RouteSvr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 {
-	m_sid = id;
-	UNIT_INFO("svr rev msg. m_svr_id =%d cmd=%x id.cid=%llx", m_svr_id, cmd, id.cid);
+	m_sid = session.id;
+	UNIT_INFO("svr rev msg. m_svr_id =%d cmd=%x id.cid=%llx", m_svr_id, cmd, session.id.cid);
 	m_mgr.m_route_client.SvrRev(m_svr_id, cmd);
 
 }
@@ -660,12 +661,12 @@ void RouteSvr::OnClientDisCon(const SessionId &id)
 
 }
 
-void RouteSvr::OnClientConnect(const SessionId &id)
+void RouteSvr::OnClientConnect(const Session &session)
 {
 
 }
 
-void RouteSvr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+void RouteSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 	UNIT_INFO("OnSetMainCmd2SvrRsp %d %d", main_cmd, svr_id);
 }

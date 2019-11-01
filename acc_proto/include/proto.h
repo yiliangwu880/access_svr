@@ -85,6 +85,7 @@ namespace acc {
 
 		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
 		CMD_NTF_CREATE_SESSION,			//MsgNtfCreateSession  验证成功的client,从acc通知所有svr,创建会话。
+		CMD_BROADCAST_UIN,				//MsgBroadcastUin  一个svr向所有svr指定会话广播uin
 
 		CMD_NTF_VERIFY_REQ,		        //MsgForward ntf转发client请求认证消息包到svr
 		CMD_NTF_FORWARD,		        //MsgForward ntf转发client消息包到svr
@@ -185,6 +186,11 @@ namespace acc {
 		{}
 		uint32 svr_id;
 		bool is_verify; //true 表示 为验证服务器
+	};
+
+	struct MsgBroadcastUin
+	{
+		uint64 uin; 
 	};
 
 	struct MsgRspReg

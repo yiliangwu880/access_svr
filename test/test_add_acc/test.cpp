@@ -61,7 +61,7 @@ namespace
 		virtual void OnRegResult(uint16 svr_id);
 
 		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
-		virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+		virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 	};
 
@@ -146,7 +146,7 @@ namespace
 	}
 
 
-	void AddAccFollow::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+	void AddAccFollow::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 	{
 		UNIT_ASSERT(CMD_TO_SVR == cmd);
 		UNIT_INFO("rev msg from client to acc2, to svr");

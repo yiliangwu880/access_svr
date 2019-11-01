@@ -126,7 +126,7 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 		L_ERROR("create session fail, repeated insert id. cid=%lld acc_id=%d", s.id.cid, s.id.acc_id);
 		return;
 	}
-	m_facade.OnClientConnect(s.id);
+	m_facade.OnClientConnect(s);
 	return;
 }
 
@@ -145,7 +145,8 @@ void acc::ADClientCon::HandleMsgForward(const ASMsg &msg)
 		L_ERROR("can't find session when rev forward msg. %lld %d", id.cid, id.acc_id);
 		return;
 	}
-	m_facade.OnRevClientMsg(id, f_msg.cmd, f_msg.msg, f_msg.msg_len);
+	//这里还没有做会话查找，等用户需要发送消息到client再查找.
+	m_facade.OnRevClientMsg(it->second, f_msg.cmd, f_msg.msg, f_msg.msg_len);
 }
 
 void acc::ADClientCon::HandleVerifyReq(const ASMsg &msg)
@@ -171,8 +172,14 @@ void acc::ADClientCon::HandleMsgNtfDiscon(const ASMsg &msg)
 	id.cid = ntf.cid;
 	id.acc_id = m_acc_id;
 
-	m_id_2_s.erase(id.cid);
-	m_facade.OnClientDisCon(id);
+	auto it = m_id_2_s.find(id.cid);
+	if (it == m_id_2_s.end())
+	{
+		L_ERROR("can't find session when rev ntf discon. %lld %d", id.cid, id.acc_id);
+		return;
+	}
+	m_facade.OnClientDisCon(it->second);
+	m_id_2_s.erase(it);
 }
 
 void acc::ADClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
@@ -184,8 +191,14 @@ void acc::ADClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
 	SessionId id;
 	id.cid = rsp.cid;
 	id.acc_id = m_acc_id;
+	auto it = m_id_2_s.find(id.cid);
+	if (it == m_id_2_s.end())
+	{
+		L_ERROR("can't find session. %lld %d", id.cid, id.acc_id);
+		return;
+	}
 
-	m_facade.OnSetMainCmd2SvrRsp(id, rsp.main_cmd, rsp.svr_id);
+	m_facade.OnSetMainCmd2SvrRsp(it->second, rsp.main_cmd, rsp.svr_id);
 }
 
 void acc::ADClientCon::OnTryReconTimeOut()
@@ -211,6 +224,7 @@ bool acc::SessionId::operator<(const SessionId &a) const
 
 acc::Session::Session()
 	:remote_port(0)
+	,uin(0)
 {
 
 }

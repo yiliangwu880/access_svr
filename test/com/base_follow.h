@@ -72,7 +72,7 @@ public:
 	virtual void OnRegResult(uint16 svr_id) ;
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) ;
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) ;
 
 	//接收client消息包.请求认证的包
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) ;
@@ -81,13 +81,13 @@ public:
 	virtual void OnClientDisCon(const SessionId &id) ;
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id) ;
+	virtual void OnClientConnect(const Session &session) ;
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) ;
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) ;
 };
 
 
@@ -134,7 +134,7 @@ public:
 	virtual void OnRegResult(uint16 svr_id);
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 	//接收client消息包.请求认证的包
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
@@ -143,13 +143,13 @@ public:
 	virtual void OnClientDisCon(const SessionId &id);
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id);
+	virtual void OnClientConnect(const Session &session);
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
 
@@ -207,7 +207,7 @@ public:
 	virtual void OnRegResult(uint16 svr_id);
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 	//接收client消息包.请求认证的包
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
@@ -216,13 +216,13 @@ public:
 	virtual void OnClientDisCon(const SessionId &id);
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id);
+	virtual void OnClientConnect(const Session &session);
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
 //RUN_ROUTE
@@ -274,7 +274,7 @@ public:
 	virtual void OnRegResult(uint16 svr_id);
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 	//接收client消息包.请求认证的包
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
@@ -283,13 +283,13 @@ public:
 	virtual void OnClientDisCon(const SessionId &id);
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id);
+	virtual void OnClientConnect(const Session &session);
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
 //基本功能，流程测试

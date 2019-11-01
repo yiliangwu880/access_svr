@@ -23,7 +23,7 @@ public:
 	virtual void OnRegResult(uint16 svr_id) = 0;
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) = 0;
 
 	//接收client消息包.请求认证的包
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) = 0;
@@ -32,13 +32,13 @@ public:
 	virtual void OnClientDisCon(const SessionId &id) = 0;
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id) = 0;
+	virtual void OnClientConnect(const Session &session) = 0;
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) = 0;
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) = 0;
 };
 
 class AllADFacadeMgr : public acc::ADFacadeMgr 
@@ -54,8 +54,8 @@ public:
 	}
 
 	//接收client消息包到svr
-	virtual void OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) {
-		m_svr_cb->OnRevClientMsg(id,cmd, msg, msg_len);
+	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) {
+		m_svr_cb->OnRevClientMsg(session, cmd, msg, msg_len);
 	}
 
 	//接收client消息包.请求认证的包
@@ -64,21 +64,21 @@ public:
 	}
 
 	//client断线通知
-	virtual void OnClientDisCon(const SessionId &id) {
-		m_svr_cb->OnClientDisCon(id);
+	virtual void OnClientDisCon(const Session &session) {
+		m_svr_cb->OnClientDisCon(session.id);
 	}
 
 	//client接入，创建会话。 概念类似 新socket连接客户端
-	virtual void OnClientConnect(const SessionId &id) {
-		m_svr_cb->OnClientConnect(id);
+	virtual void OnClientConnect(const Session &session) {
+		m_svr_cb->OnClientConnect(session);
 	}
 
 	//@id 请求参数一样
 	//@main_cmd 请求参数一样
 	//@svr_id 0 表示失败。
 	//参考 SetMainCmd2Svr
-	virtual void OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id) {
-		m_svr_cb->OnSetMainCmd2SvrRsp(id, main_cmd, svr_id);
+	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) {
+		m_svr_cb->OnSetMainCmd2SvrRsp(session, main_cmd, svr_id);
 	}
 };
 

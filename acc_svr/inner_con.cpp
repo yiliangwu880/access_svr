@@ -144,6 +144,11 @@ namespace
 			L_DEBUG("client not exist");
 			return;
 		}
+		if (!pClient->IsVerify())
+		{
+			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
+			return;
+		}
 
 		pClient->SetMainCmd2SvrId(req.main_cmd, req.svr_id);
 		con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);

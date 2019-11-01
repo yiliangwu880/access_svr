@@ -166,7 +166,11 @@ bool acc::ADFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
 	L_COND_F(con->IsReg());
-	L_COND_F(nullptr != con->FindSession(id), "can't find session");
+	if (nullptr == con->FindSession(id))
+	{
+		L_INFO("can't find session");
+		return false;
+	}
 
 	MsgReqSetMainCmd2Svr req;
 	req.cid = id.cid;
@@ -175,7 +179,7 @@ bool acc::ADFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint
 	return con->Send(CMD_REQ_SET_MAIN_CMD_2_SVR, req);
 }
 
-void acc::ADFacadeMgr::OnSetMainCmd2SvrRsp(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+void acc::ADFacadeMgr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
 }
@@ -185,17 +189,17 @@ void acc::ADFacadeMgr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const cha
 	L_WARN("OnRevVerifyReq no implement");
 }
 
-void acc::ADFacadeMgr::OnRevClientMsg(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
+void acc::ADFacadeMgr::OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	L_WARN("OnRevClientMsg no implement");
 }
 
-void acc::ADFacadeMgr::OnClientDisCon(const SessionId &id)
+void acc::ADFacadeMgr::OnClientDisCon(const Session &session)
 {
 
 }
 
-void acc::ADFacadeMgr::OnClientConnect(const SessionId &id)
+void acc::ADFacadeMgr::OnClientConnect(const Session &session)
 {
 
 }
