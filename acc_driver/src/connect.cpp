@@ -52,12 +52,11 @@ void acc::ADClientCon::OnConnected()
 	}
 
 	{
-		const MsgReqSetHeartbeatInfo &req = m_con_mgr.GetHeartbeatInfo();
-		if (req.cmd != 0)
-		{
-			L_DEBUG("OnConnected. send heartbeat info. %d %d %d", req.cmd, req.rsp_cmd, req.interval_sec);
-			Send(CMD_REQ_SET_HEARTBEAT_INFO, req);
-		}
+		const MsgAccSeting &req = m_con_mgr.GetHeartbeatInfo();
+		L_DEBUG("OnConnected. send heartbeat info. %d %d %d", req.hbi.req_cmd, req.hbi.rsp_cmd, req.hbi.interval_sec);
+		string as_msg;
+		L_COND(req.Serialize(as_msg));
+		Send(CMD_REQ_ACC_SETING, as_msg);
 	}
 }
 
@@ -88,6 +87,15 @@ bool acc::ADClientCon::Send(const acc::ASMsg &as_data)
 {
 	std::string tcp_pack;
 	L_COND_F(as_data.Serialize(tcp_pack));
+//	L_DEBUG("cmd =%d tcp_pack.length %d", as_data.cmd, tcp_pack.length());
+	return SendPack(tcp_pack);
+}
+
+bool acc::ADClientCon::Send(acc::Cmd as_cmd, const std::string &as_msg)
+{
+	std::string tcp_pack;
+	L_COND_F(ASMsg::Serialize(as_cmd, as_msg, tcp_pack));
+//	L_DEBUG("cmd =%d tcp_pack.length %d", as_cmd, tcp_pack.length());
 	return SendPack(tcp_pack);
 }
 
@@ -122,6 +130,8 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 	s.id.cid = rsp.cid;
 	s.uin = rsp.uin;
 	s.id.acc_id = m_acc_id;
+	s.remote_ip = inet_ntoa(rsp.addr.sin_addr);
+	s.remote_port = ntohs(rsp.addr.sin_port);
 	bool r = m_id_2_s.insert(make_pair(s.id.cid, s)).second;
 	if (!r)
 	{
@@ -373,24 +383,20 @@ void acc::ConMgr::SetRegResult(bool is_success)
 	}
 }
 
-void acc::ConMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec)
-{
-	m_heartbeat_info.cmd = cmd;
-	m_heartbeat_info.rsp_cmd = rsp_cmd;
-	m_heartbeat_info.interval_sec = interval_sec;
 
+void acc::ConMgr::SetAccSeting(const MsgAccSeting &seting)
+{
+	m_seting = seting;
 	for (ADClientCon *p : m_vec_con)
 	{
 		if (!p->IsConnect())
 		{
 			continue;
 		}
-		if (m_heartbeat_info.cmd == 0)
-		{
-			continue;
-		}
 		//L_DEBUG("send heartbeat info to port =%d", p->GetRemotePort());
-		p->Send(CMD_REQ_SET_HEARTBEAT_INFO, m_heartbeat_info);
+		string as_msg;
+		L_COND(m_seting.Serialize(as_msg));
+		p->Send(CMD_REQ_ACC_SETING, as_msg);
 	}
 }
 

@@ -61,16 +61,14 @@ namespace acc {
 		ADFacadeMgr();
 		~ADFacadeMgr();
 
+		//设置acc最大 client数量.
+		//设置会请求注册后，自动发送给acc。或者以及注册了，修改设置，自动马上发送给acc
+		void SetAccSeting(const MsgAccSeting &seting);
+
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 
 		//运行期，新增acc
 		bool AddAcc(const Addr &addr); 
-
-		//设置心跳,当前有连接acc,就请求acc设置，没有就等新连接自动设置。
-		//@cmd 客户端请求消息号
-		//@rsp_cmd 响应给客户端额消息号
-		//@interval_sec 心跳超时
-		void SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec);
 
 		//请求验证结果. 
 		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);

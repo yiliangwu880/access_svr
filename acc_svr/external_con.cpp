@@ -8,6 +8,7 @@ using namespace lc;
 
 ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
+	, m_uin(0)
 {
 }
 
@@ -88,6 +89,11 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 	return;
 }
 
+void ExternalSvrCon::OnConnected()
+{
+
+}
+
 //client 接收的tcp pack 转 MsgForward
 bool ExternalSvrCon::ClientTcpPack2MsgForward(const lc::MsgPack &msg, MsgForward &f_msg) const
 {
@@ -136,7 +142,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 void ExternalSvrCon::OnVerfiyTimeOut()
 {
 	L_ASSERT(State::WAIT_VERIFY == m_state);
-	L_WARN("wait verify time out, disconnect client");//通常验证服务器异常，导致没验证响应。
+	L_WARN("wait verify time out, disconnect client");//通常验证服务器异常，导致没验证响应。当连接失败处理
 	DisConnect();
 }
 
@@ -154,15 +160,16 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		L_WARN("client illegal msg");
 		return;
 	}
-	if (HeartbeatInfo::Obj().cmd != 0 && HeartbeatInfo::Obj().cmd == f_msg.cmd)
+	const HeartBeatInfo &hbi = AccSeting::Obj().m_seting.hbi;
+	if (hbi.req_cmd != 0 && hbi.req_cmd == f_msg.cmd)
 	{//reset heartbeat
 		//如果这样做法效率不满意，试下 循环定时器，过期时间里面检查心跳状态是否没更新，没更新就断开。 这样让用户层不用创建销毁定时器。
 		m_heartbeat_tm.StopTimer();
-		L_ASSERT(0 != HeartbeatInfo::Obj().interval_sec);
+		L_ASSERT(0 != hbi.interval_sec);
 		auto f = std::bind(&ExternalSvrCon::OnHeartbeatTimeOut, this);
-		L_DEBUG("rev beat, start time sec=%d", HeartbeatInfo::Obj().interval_sec);
-		m_heartbeat_tm.StartTimer(HeartbeatInfo::Obj().interval_sec*1000, f);
-		SendMsg(HeartbeatInfo::Obj().rsp_cmd, "", 0);
+		L_DEBUG("rev beat, start time sec=%d", hbi.interval_sec);
+		m_heartbeat_tm.StartTimer(hbi.interval_sec*1000, f);
+		SendMsg(hbi.rsp_cmd, "", 0);
 		return;
 	}
 	//真正处理转发
@@ -182,7 +189,7 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 
-	L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, HeartbeatInfo::Obj().cmd, HeartbeatInfo::Obj().rsp_cmd);
+	L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, AccSeting::Obj().m_seting.hbi.req_cmd, AccSeting::Obj().m_seting.hbi.rsp_cmd);
 	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{

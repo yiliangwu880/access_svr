@@ -34,9 +34,11 @@ bool acc::ADFacadeMgr::AddAcc(const Addr &addr)
 	return m_con_mgr.AddAcc(addr);
 }
 
-void acc::ADFacadeMgr::SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec)
+
+
+void acc::ADFacadeMgr::SetAccSeting(const MsgAccSeting &seting)
 {
-	m_con_mgr.SetHeartbeatInfo(cmd, rsp_cmd, interval_sec);
+	m_con_mgr.SetAccSeting(seting);
 }
 
 bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len)
@@ -50,10 +52,9 @@ bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32
 	req.cid = id.cid;
 	req.is_success = is_success;
 	
-	req.forward_msg.cid = id.cid;
-	req.forward_msg.cmd = cmd;
-	req.forward_msg.msg = msg;
-	req.forward_msg.msg_len = msg_len;
+	req.rsp_msg.cmd = cmd;
+	req.rsp_msg.msg = msg;
+	req.rsp_msg.msg_len = msg_len;
 
 	string as_msg;
 	req.Serialize(as_msg);
@@ -102,9 +103,9 @@ void acc::ADFacadeMgr::BroadCastToClient(uint32 cmd, const char *msg, uint16 msg
 	MsgReqBroadCast req;
 	req.cid_len = 0;
 	req.cid_s = nullptr;
-	req.cmd = cmd;
-	req.msg = msg;
-	req.msg_len = msg_len;
+	req.broadcast_msg.cmd = cmd;
+	req.broadcast_msg.msg = msg;
+	req.broadcast_msg.msg_len = msg_len;
 
 	string req_tcp_pack;
 	req.Serialize(req_tcp_pack);
@@ -128,9 +129,9 @@ void acc::ADFacadeMgr::BroadCastToClient(const std::vector<uint64> &vec_cid, uin
 	MsgReqBroadCast req;
 	req.cid_len = vec_cid.size();
 	req.cid_s = &(vec_cid[0]);
-	req.cmd = cmd;
-	req.msg = msg;
-	req.msg_len = msg_len;
+	req.broadcast_msg.cmd = cmd;
+	req.broadcast_msg.msg = msg;
+	req.broadcast_msg.msg_len = msg_len;
 
 	string req_tcp_pack;
 	req.Serialize(req_tcp_pack);

@@ -11,20 +11,19 @@ using namespace lc;
 
 namespace
 {
-	void Parse_CMD_REQ_SET_HEARTBEAT_INFO(InnerSvrCon &con, const acc::ASMsg &msg)
+
+	void Parse_CMD_REQ_ACC_SETING(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
-		MsgReqSetHeartbeatInfo req;
-		bool ret = CtrlMsgProto::Parse(msg, req);
+		MsgAccSeting req;
+		bool ret = req.Parse(msg.msg, msg.msg_len);
 		L_COND(ret, "parse ctrl msg fail");
-		if (0 == req.cmd || 0 == req.rsp_cmd || 0 == req.interval_sec)
+		if (0 == req.hbi.req_cmd || 0 == req.hbi.rsp_cmd || 0 == req.hbi.interval_sec)
 		{
 			L_WARN("rev wrong MsgReqSetHeartbeatInfo, ignore");
 			return;
 		}
 
-		HeartbeatInfo::Obj().cmd = req.cmd;
-		HeartbeatInfo::Obj().rsp_cmd = req.rsp_cmd;
-		HeartbeatInfo::Obj().interval_sec = req.interval_sec;
+		AccSeting::Obj().m_seting = req;
 	}
 
 	void Parse_CMD_REQ_DISCON_ALL(InnerSvrCon &con, const acc::ASMsg &msg)
@@ -81,13 +80,12 @@ namespace
 		MsgReqVerifyRet req;
 		L_COND(req.Parse(msg.msg, msg.msg_len), "parse ctrl msg fail");
 		L_COND(req.cid != 0, "CMD_REQ_VERIFY_RET cid==0");
-		const MsgForward &f_msg = req.forward_msg;
-		L_COND(0 != f_msg.cid);
+		const ClientSvrMsg &f_msg = req.rsp_msg;
 
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(f_msg.cid);
+		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
 		if (nullptr == pClient)
 		{
-			L_DEBUG("find cid fail. cid=%lld", f_msg.cid);
+			L_DEBUG("find cid fail. cid=%lld", req.cid);
 			return;
 		}
 		//notify verify result to client
@@ -107,6 +105,9 @@ namespace
 		//通知创建会话
 		MsgNtfCreateSession ntf;
 		ntf.cid = req.cid;
+		ntf.uin = 0;
+		ntf.addr = pClient->GetRemoteAddr();
+		//L_DEBUG("verify create session. port=%x %x", ntohs(pClient->GetRemoteAddr().sin_port), pClient->GetRemotePort());
 		auto f = [&ntf](SvrCon &con)
 		{
 			InnerSvrCon *pCon = dynamic_cast<InnerSvrCon *>(&con);
@@ -202,8 +203,8 @@ namespace
 		}
 
 		string tcp_pack;
-		tcp_pack.append((char *)&req.cmd, sizeof(req.cmd));
-		tcp_pack.append(req.msg, req.msg_len);
+		tcp_pack.append((char *)&req.broadcast_msg.cmd, sizeof(req.broadcast_msg.cmd));
+		tcp_pack.append(req.broadcast_msg.msg, req.broadcast_msg.msg_len);
 		if (req.cid_len == 0)
 		{
 			auto f = [&req, &tcp_pack](SvrCon &con)
@@ -251,7 +252,7 @@ void SvrCtrlMsgDispatch::Init()
 	m_cmd_2_handle[CMD_REQ_SET_MAIN_CMD_2_SVR] = Parse_CMD_REQ_SET_MAIN_CMD_2_SVR;
 	m_cmd_2_handle[CMD_REQ_DISCON]             = Parse_CMD_REQ_DISCON;
 	m_cmd_2_handle[CMD_REQ_DISCON_ALL]         = Parse_CMD_REQ_DISCON_ALL;
-	m_cmd_2_handle[CMD_REQ_SET_HEARTBEAT_INFO] = Parse_CMD_REQ_SET_HEARTBEAT_INFO;
+	m_cmd_2_handle[CMD_REQ_ACC_SETING]		   = Parse_CMD_REQ_ACC_SETING;
 	m_cmd_2_handle[CMD_REQ_BROADCAST_UIN]	   = Parse_CMD_REQ_BROADCAST_UIN;
 }
 
@@ -306,6 +307,7 @@ void InnerSvrCon::RevertSession()
 			MsgNtfCreateSession ntf;
 			ntf.cid = pCon->GetId();
 			ntf.uin = pCon->GetUin();
+			ntf.addr = pCon->GetRemoteAddr();
 			L_DEBUG("CMD_NTF_CREATE_SESSION uin=%lld", ntf.uin);
 			this->Send(CMD_NTF_CREATE_SESSION, ntf);
 		}
@@ -350,7 +352,7 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 {
 	ASMsg as_data;
 	L_COND(as_data.Parse(msg.data, msg.len));
-	L_DEBUG("as_data.cmd=%x", as_data.cmd);
+//	L_DEBUG("as_data.cmd=%d as_data.msg_len=%d tcp_pack.length=%d", as_data.cmd, as_data.msg_len, msg.len);
 	if (CMD_REQ_FORWARD == as_data.cmd)//直接转发，不用分发，快点
 	{
 		MsgForward f_msg;

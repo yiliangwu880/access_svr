@@ -6,6 +6,8 @@ using namespace lc;
 using namespace su;
 using namespace acc;
 
+#define L_DEBUG UNIT_INFO
+#define L_ERROR UNIT_ERROR
 namespace
 {
 	static const uint32 CMD_VERIFY = ((uint32)BF_SVR1 << 16) | 1;
@@ -97,7 +99,7 @@ void BaseFlowSvr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *ms
 {
 	UNIT_ASSERT(id.cid != 0);
 	UNIT_ASSERT(id.acc_id == 0);
-	UNIT_INFO("cmd=%x", cmd);
+//	UNIT_INFO("cmd=%x", cmd);
 	UNIT_ASSERT(CMD_VERIFY == cmd);
 	UNIT_ASSERT(State::WAIT_CLIENT_REQ_VERFIY == m_state);
 	string s(msg, msg_len);
@@ -164,8 +166,46 @@ BaseFunTestMgr::BaseFunTestMgr()
 	m_b_svr2.m_svr_id = 2;
 	m_b_svr3.m_svr_id = 3;
 }
+namespace{
+	//简化解包操作。赋值并移动指针
+	template<class T>
+	void ParseCp(T &dst, const char *&src)
+	{
+		dst = (decltype(dst))(*src); // 类似 dst = (uint32 &)(*src)
+		src = src + sizeof(dst);
+	}
 
+bool TempParse(MsgAccSeting &req, const char *tcp_pack, uint16 tcp_pack_len)
+{
+	L_DEBUG("MsgReqAccSeting tcp_pack_len =%d", tcp_pack_len);
+	if (0 == tcp_pack_len || nullptr == tcp_pack)
+	{
+		L_ERROR("e1");
+		return false;
+	}
+	const char *cur = tcp_pack; //读取指针
 
+	ParseCp(req.hbi.req_cmd, cur);
+	ParseCp(req.hbi.rsp_cmd, cur);
+	ParseCp(req.hbi.interval_sec, cur);
+
+	ParseCp(req.cli.max_num, cur);
+	ParseCp(req.cli.rsp_cmd, cur);
+
+	L_DEBUG("max_client_num =  %d %d", req.cli.max_num, req.cli.rsp_cmd);
+
+	uint16 max_client_msg_len = 0;
+	ParseCp(max_client_msg_len, cur);
+	L_DEBUG("max_client_msg_len = %d", max_client_msg_len);
+	if (max_client_msg_len >= ASMSG_MAX_LEN)
+	{
+		L_ERROR("max_client_msg_len %d", max_client_msg_len);
+		return false;
+	}
+	req.cli.rsp_msg.assign(cur, max_client_msg_len);
+	return true;
+}
+}
 bool BaseFunTestMgr::Init()
 {
 	const std::vector<Addr> &inner_vec = CfgMgr::Obj().m_inner_vec;
@@ -184,8 +224,39 @@ bool BaseFunTestMgr::Init()
 	UNIT_ASSERT(m_svr3.Init(vec, 3));
 	m_svr3.m_svr_cb = &m_b_svr3;
 
+
+
+	{
+		MsgAccSeting req;
+		req.cli.rsp_msg = "abc";
+		string as_msg;
+		UNIT_ASSERT(req.Serialize(as_msg));
+
+		ASMsg asmsg;
+		asmsg.cmd = CMD_REQ_ACC_SETING;
+		asmsg.msg_len = as_msg.length();
+		asmsg.msg = as_msg.c_str();
+
+		std::string tcp_pack;
+		UNIT_ASSERT(asmsg.Serialize(tcp_pack));
+	
+	
+
+		//------------------
+		ASMsg rsp_asmsg;
+		rsp_asmsg.Parse(tcp_pack.c_str(), tcp_pack.length());
+
+		MsgAccSeting rsp;
+		UNIT_ASSERT(rsp.Parse(rsp_asmsg.msg, rsp_asmsg.msg_len));
+		UNIT_ASSERT(TempParse(rsp, rsp_asmsg.msg, rsp_asmsg.msg_len));
+		UNIT_ASSERT(rsp.cli.rsp_msg == "abc");
+		UNIT_INFO("parse msg ok");
+	}
 	
 	UNIT_ASSERT(m_client.ConnectInit(ex_addr.ip.c_str(), ex_addr.port));
+
+
+
 
 	return true;
 
@@ -330,7 +401,11 @@ void HearBeatSvr::Start()
 {
 	UNIT_ASSERT(m_state == State::WAIT_VERFIY_REQ);
 	UNIT_INFO(" HearBeatSvr::Start");
-	m_mgr.m_svr1.SetHeartbeatInfo(CMD_BEAT_REQ, CMD_BEAT_RSP, 2);
+	MsgAccSeting seting;
+	seting.hbi.req_cmd = CMD_BEAT_REQ;
+	seting.hbi.rsp_cmd = CMD_BEAT_RSP;
+	seting.hbi.interval_sec = 2;
+	m_mgr.m_svr1.SetAccSeting(seting);
 }
 
 void HearBeatSvr::OnRegResult(uint16 svr_id)
@@ -365,7 +440,7 @@ void HearBeatSvr::OnClientDisCon(const SessionId &id)
 
 void HearBeatSvr::OnClientConnect(const Session &session)
 {
-
+	UNIT_ASSERT(session.remote_ip == "127.0.0.1");
 }
 
 void HearBeatSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)

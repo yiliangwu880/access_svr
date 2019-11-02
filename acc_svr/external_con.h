@@ -9,19 +9,15 @@
 class ExternalSvrCon;
 
 
-class HeartbeatInfo : public Singleton<HeartbeatInfo>
+class AccSeting : public Singleton<AccSeting>
 {
 public:
-	HeartbeatInfo() 
-		:cmd(0)
-		,rsp_cmd(0)
-		,interval_sec(0)
+	AccSeting() 
 	{
 	}
 public:
-	uint32 cmd;		//客户端请求消息号
-	uint32 rsp_cmd; //响应给客户端额消息号
-	uint64 interval_sec;
+	acc::MsgAccSeting m_seting;
+
 };
 
 //连接外网client的sever connect
@@ -55,9 +51,7 @@ public:
 	void SetUin(uint64 uin) { m_uin = uin; }
 private:
 	virtual void OnRecv(const lc::MsgPack &msg) override;
-	virtual void OnConnected() override
-	{
-	}
+	virtual void OnConnected() override;
 
 private:
 	bool ClientTcpPack2MsgForward(const lc::MsgPack &msg, acc::MsgForward &f_msg) const;

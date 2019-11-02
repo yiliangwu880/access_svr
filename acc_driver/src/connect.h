@@ -47,6 +47,7 @@ namespace acc {
 		const Session *FindSession(const SessionId &id);
 		//发送 acc::ASMsg
 		bool Send(const acc::ASMsg &as_data);
+		bool Send(acc::Cmd as_cmd, const std::string &as_msg);
 		//发送 acc::ASMsg
 		template<class CtrlMsg>
 		bool Send(acc::Cmd cmd, const CtrlMsg &send);
@@ -73,7 +74,7 @@ namespace acc {
 		bool m_is_fatal;      //严重错误状态，断开，不再连接，不再修复，等重启。
 		bool m_is_reg; 
 		bool m_is_verify_svr;
-		MsgReqSetHeartbeatInfo m_heartbeat_info; //如果有信息，ADClientCon连接成功会发送设置心跳信息到acc
+		MsgAccSeting m_seting; //如果有信息，ADClientCon连接成功会发送设置心跳信息到acc
 
 	public:
 		ConMgr(ADFacadeMgr &facade);
@@ -89,12 +90,8 @@ namespace acc {
 		ADClientCon *FindADClientCon(const SessionId &id) const;
 		const Session *FindSession(const SessionId &id) const;
 		void SetRegResult(bool is_success);
-		//设置心跳
-		//@cmd 客户端请求消息号
-		//@rsp_cmd 响应给客户端额消息号
-		//@interval_sec 心跳超时
-		void SetHeartbeatInfo(uint32 cmd, uint32 rsp_cmd, uint64 interval_sec);
-		const MsgReqSetHeartbeatInfo &GetHeartbeatInfo() const { return m_heartbeat_info; }
+		void SetAccSeting(const MsgAccSeting &seting);
+		const MsgAccSeting &GetHeartbeatInfo() const { return m_seting; }
 
 	private:
 		void FreeAllCon();

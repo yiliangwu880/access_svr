@@ -26,6 +26,9 @@
 
 #include <string>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifndef uint32
 using uint16 =unsigned short ;
@@ -36,17 +39,25 @@ using uint8 = unsigned char ;
 using int32 = int ;
 #endif
 
-
+#pragma pack(push)
+#pragma pack(1)
 namespace acc {
 
 	const static uint16 ASMSG_MAX_LEN = 1024 * 4; //4k
 	const static uint16 MAX_BROADCAST_CID_NUM = 400; //指定广播 cid最大数量
-	//都用linux c++,先不限制字节对齐方式
-	//#pragma pack(push)
-	//#pragma pack(1)
 
-	//#pragma pack(pop)
 
+	//client和svr层：cmd,msg
+	struct ClientSvrMsg
+	{
+		ClientSvrMsg();
+		uint32 cmd;
+		uint16 msg_len;     //msg字节数。
+		const char *msg;    //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
+	};
 	
 	//acc和svr之间的消息内容之一
 	//当消息号为 CMD_NTF_FORWARD CMD_REQ_FORWARD时，消息体为MsgForward
@@ -67,7 +78,7 @@ namespace acc {
 	{
 		uint64 cid;
 		bool is_success; //true表示验证成功
-		MsgForward forward_msg;// 验证结果给客户端。 
+		ClientSvrMsg rsp_msg;// 验证结果给客户端。 
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
 		//@para[out] std::string &tcp_pack
 		bool Serialize(std::string &tcp_pack) const;
@@ -81,7 +92,7 @@ namespace acc {
 		CMD_REQ_REG,		            //MsgReqReg 请求注册 	
 		CMD_RSP_REG,				    //MsgRspReg
 
-		CMD_REQ_SET_HEARTBEAT_INFO,		//MsgReqSetHeartbeatInfo 设置心跳功能，可选用
+		CMD_REQ_ACC_SETING,				//MsgAccSeting 设置心跳功能,acc最大client数量等，可选用
 
 		CMD_REQ_VERIFY_RET,			    //MsgReqVerifyRet 请求验证结果. svr 需要先请求验证结果，再转发client验证通过消息
 		CMD_NTF_CREATE_SESSION,			//MsgNtfCreateSession  验证成功的client,从acc通知所有svr,创建会话。
@@ -146,7 +157,7 @@ namespace acc {
 
 		//@tcp_pack [out]  ASMsg对应的序列化字符串
 		static bool Serialize(Cmd ctrl_cmd, const MsgForward &forward_msg, std::string &tcp_pack);
-		//@msg_pack 为as_msg 的序列化内容。    参考： acc和svr层:	as_cmd,as_msg
+		//@as_msg 为as_msg 的序列化内容。    参考： acc和svr层:	as_cmd,as_msg
 		//@tcp_pack [out]  ASMsg对应的序列化字符串
 		static bool Serialize(Cmd ctrl_cmd, const std::string &as_msg, std::string &tcp_pack);
 	};
@@ -158,13 +169,35 @@ namespace acc {
 		uint64 cid;
 	};
 
-	//	svr请求，设定心跳检查功能，心跳包信息{cmd, interval, rsp cmd}
-	struct  MsgReqSetHeartbeatInfo
+
+	// 设定心跳检查功能，心跳包信息{cmd, interval, rsp cmd}
+	struct HeartBeatInfo
 	{
-		MsgReqSetHeartbeatInfo();
-		uint32 cmd;		//客户端请求消息号
-		uint32 rsp_cmd; //响应给客户端额消息号
-		uint64 interval_sec;
+		uint32 req_cmd;	            //客户端请求消息号
+		uint32 rsp_cmd;	            //svr 响应给客户端额消息号
+		uint32 interval_sec;        //心跳过期间隔秒
+	};
+
+	struct ClientLimitInfo
+	{
+		uint32 max_num;			    //acc 支持 client最大数量
+		uint32 rsp_cmd;				//acc超出 client数量，给client响应. cmd
+		std::string rsp_msg;	    //acc超出 client数量，给client响应. msg,不用效率的格式。方便内存保存。
+	};
+
+	//	svr请求设置acc设置。
+	//  最大acc 可用client数量,已经回应 client消息包
+	struct  MsgAccSeting
+	{
+		MsgAccSeting();
+
+		HeartBeatInfo hbi;
+		ClientLimitInfo cli;
+		uint32 no_msg_interval_sec;        //client连接成功，不发消息的超时时间。
+ 
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
 	};
 
 	struct MsgReqBroadCast
@@ -172,9 +205,7 @@ namespace acc {
 		MsgReqBroadCast();
 		uint16 cid_len;		//cid数量
 		const uint64 *cid_s;      //cid列表
-		uint32 cmd;			//client和svr层：cmd,msg
-		uint16 msg_len;     //msg字节数。
-		const char *msg;    //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
+		ClientSvrMsg broadcast_msg;
 
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
 		//@para[out] std::string &tcp_pack
@@ -206,6 +237,7 @@ namespace acc {
 	{
 		uint64 cid;
 		uint64 uin;
+		sockaddr_in addr;
 	};
 
 
@@ -259,3 +291,5 @@ namespace acc {
 	}
 
 }
+
+#pragma pack(pop)
