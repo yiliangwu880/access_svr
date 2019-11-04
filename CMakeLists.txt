@@ -59,7 +59,7 @@ ADD_SUBDIRECTORY(acc_proto)
 ADD_SUBDIRECTORY(acc_svr)
 ADD_SUBDIRECTORY(acc_driver)
 ADD_SUBDIRECTORY(test)
-#ADD_SUBDIRECTORY(samples)
+ADD_SUBDIRECTORY(samples)
 
 #自定义命令
 ##################################
