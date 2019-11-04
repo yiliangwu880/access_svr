@@ -1,5 +1,3 @@
-最大连接client数,svr可以请求修改。
-client连接成功，不发第一条消息。超时断开
 
 samples
 {

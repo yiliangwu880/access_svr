@@ -1,4 +1,5 @@
 #include "proto.h"
+#include <limits>
 
 namespace
 {
@@ -230,9 +231,10 @@ acc::MsgAccSeting::MsgAccSeting()
 	hbi.req_cmd = 0;
 	hbi.rsp_cmd = 0;
 	hbi.interval_sec = 0;
-	cli.max_num = 20000;
+	cli.max_num = std::numeric_limits<uint32>::max();
 	cli.rsp_cmd = 0;
 	cli.rsp_msg.clear();
+	no_msg_interval_sec = 0;
 }
 
 bool acc::MsgAccSeting::Parse(const char *tcp_pack, uint16 tcp_pack_len)
@@ -258,6 +260,8 @@ bool acc::MsgAccSeting::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 		return false;
 	}
 	cli.rsp_msg.assign(cur, max_client_msg_len);
+	cur += max_client_msg_len;
+	ParseCp(no_msg_interval_sec, cur);
 	return true;
 }
 
@@ -274,6 +278,8 @@ bool acc::MsgAccSeting::Serialize(std::string &tcp_pack) const
 	tcp_pack.append((const char *)&max_client_msg_len, sizeof(max_client_msg_len));
 
 	tcp_pack.append(cli.rsp_msg);
+
+	tcp_pack.append((const char *)&no_msg_interval_sec, sizeof(no_msg_interval_sec));
 	return true;
 }
 

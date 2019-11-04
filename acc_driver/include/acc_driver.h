@@ -62,7 +62,8 @@ namespace acc {
 		~ADFacadeMgr();
 
 		//设置acc最大 client数量.
-		//设置会请求注册后，自动发送给acc。或者以及注册了，修改设置，自动马上发送给acc
+		//当未注册时，会请求注册后，自动发送给acc。
+		//当已经注册了，自动马上发送给acc。
 		void SetAccSeting(const MsgAccSeting &seting);
 
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);

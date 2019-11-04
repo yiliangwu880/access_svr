@@ -17,12 +17,8 @@ namespace
 		MsgAccSeting req;
 		bool ret = req.Parse(msg.msg, msg.msg_len);
 		L_COND(ret, "parse ctrl msg fail");
-		if (0 == req.hbi.req_cmd || 0 == req.hbi.rsp_cmd || 0 == req.hbi.interval_sec)
-		{
-			L_WARN("rev wrong MsgReqSetHeartbeatInfo, ignore");
-			return;
-		}
-
+		L_INFO("rev CMD_REQ_ACC_SETING");
+//		L_DEBUG("req no msg sec=%d", req.no_msg_interval_sec);
 		AccSeting::Obj().m_seting = req;
 	}
 

@@ -19,7 +19,7 @@ public:
 	void SendStr(uint32 cmd, const std::string &msg);
 
 	virtual void OnRecv(const lc::MsgPack &msg) override;
-	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) = 0;
+	virtual void OnRecvMsg(uint32 cmd, const std::string &msg) {};
 	virtual void OnConnected() {};
 	virtual void OnDisconnected() {};
 };

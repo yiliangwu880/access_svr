@@ -13,7 +13,7 @@ class Server: public Singleton<Server>
 public:
 	bool Init();
 	ExternalSvrCon *FindClientSvrCon(uint64 cid);
-
+	uint32 GetExConSize() const;//外部连接数量
 public:
 	lc::Listener<InnerSvrCon> m_svr_listener;
 	lc::Listener<ExternalSvrCon> m_client_listener;

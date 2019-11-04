@@ -93,5 +93,15 @@ Project "test_svr_revert"
 		"../test/com/**",  
 	}
     
+Project "test_2combine"
+	includedirs { 
+		"../include/",
+	}
+
+	SrcPath { 
+		"../test/test_2combine/**",  
+		"../test/com/**",  
+	}
+    
     
     

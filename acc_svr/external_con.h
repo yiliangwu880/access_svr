@@ -35,8 +35,10 @@ private:
 
 	State m_state;
 	MainCmd2SvrId m_cmd_2_svrid;//有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id. 比如MMORPG,多个场景进程。
+	lc::Timer m_wfm_tm;			//等第一条消息超时定时器
 	lc::Timer m_verify_tm;		//认证超时定时器
 	lc::Timer m_heartbeat_tm;	//心跳超时定时器
+	lc::Timer m_cls_tm;			// client limite size. 最大client数量，断开定时器
 	uint64 m_uin; //玩家标识
 
 public:
@@ -57,6 +59,7 @@ private:
 	bool ClientTcpPack2MsgForward(const lc::MsgPack &msg, acc::MsgForward &f_msg) const;
 	void Forward2VerifySvr(const lc::MsgPack &msg);
 	void Forward2Svr(const lc::MsgPack &msg);
+	void OnWaitFirstMsgTimeOut();
 	void OnVerfiyTimeOut();
 	void OnHeartbeatTimeOut();
 };

@@ -29,6 +29,11 @@ ExternalSvrCon * Server::FindClientSvrCon(uint64 cid)
 	return p;
 }
 
+uint32 Server::GetExConSize() const
+{
+	return m_client_listener.GetConstConnMgr().GetConSize();
+}
+
 CfgMgr::CfgMgr()
 	:m_inner_port(0)
 	, m_ex_port(0)

@@ -1,6 +1,7 @@
 #include "external_con.h"
 #include "inner_con.h"
 #include "com.h"
+#include "server.h"
 
 using namespace std;
 using namespace acc;
@@ -10,6 +11,7 @@ ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 	, m_uin(0)
 {
+	
 }
 
 ExternalSvrCon::~ExternalSvrCon()
@@ -91,7 +93,24 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 
 void ExternalSvrCon::OnConnected()
 {
+	//L_DEBUG("ExternalSvrCon OnConnected . sec=%d", AccSeting::Obj().m_seting.no_msg_interval_sec);
+	const ClientLimitInfo &cli = AccSeting::Obj().m_seting.cli;
+	if (Server::Obj().GetExConSize() > cli.max_num)
+	{
+		L_INFO("external con too much. cur size=%d. rsp_cmd=%d", Server::Obj().GetExConSize(), cli.rsp_cmd);
+		SendMsg(cli.rsp_cmd, cli.rsp_msg.c_str(), cli.rsp_msg.length());
+		//延时断开，等上面消息发送出去。这个方法不可靠，可能发送失败。 以后再想办法。
+		auto f = std::bind(&ExternalSvrCon::DisConnect, this);
+		m_cls_tm.StartTimer(1000, f);
+		return;
+	}
 
+	if (0 != AccSeting::Obj().m_seting.no_msg_interval_sec)
+	{
+		//L_DEBUG("start no msg timer . sec=%d", AccSeting::Obj().m_seting.no_msg_interval_sec);
+		auto f = std::bind(&ExternalSvrCon::OnWaitFirstMsgTimeOut, this);
+		m_wfm_tm.StartTimer(AccSeting::Obj().m_seting.no_msg_interval_sec * 1000, f);
+	}
 }
 
 //client 接收的tcp pack 转 MsgForward
@@ -110,6 +129,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 {
 	L_COND(State::INIT == m_state);
 
+	m_wfm_tm.StopTimer();
 	string tcp_pack;
 	{//client tcp pack to ASData tcp pack 
 		MsgForward f_msg;
@@ -201,5 +221,11 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	L_COND(ASMsg::Serialize(CMD_NTF_FORWARD, f_msg, tcp_pack));
 	pSvr->SendPack(tcp_pack.c_str(), tcp_pack.length());
 
+}
+
+void ExternalSvrCon::OnWaitFirstMsgTimeOut()
+{
+	L_INFO("wait client 1st msg time out, disconnect");
+	DisConnect();
 }
 

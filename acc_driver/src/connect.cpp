@@ -53,7 +53,9 @@ void acc::ADClientCon::OnConnected()
 
 	{
 		const MsgAccSeting &req = m_con_mgr.GetHeartbeatInfo();
-		L_DEBUG("OnConnected. send heartbeat info. %d %d %d", req.hbi.req_cmd, req.hbi.rsp_cmd, req.hbi.interval_sec);
+		L_DEBUG("OnConnected. send MsgAccSeting info. %d %d %d no_msg_interval_sec=%d",
+			req.hbi.req_cmd, req.hbi.rsp_cmd, req.hbi.interval_sec, 
+			req.no_msg_interval_sec);
 		string as_msg;
 		L_COND(req.Serialize(as_msg));
 		Send(CMD_REQ_ACC_SETING, as_msg);
