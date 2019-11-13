@@ -1,4 +1,4 @@
-//Çı¶¯¾ßÌåÊµÏÖ
+//é©±åŠ¨å…·ä½“å®ç°
 
 
 #pragma once
@@ -16,7 +16,7 @@
 
 namespace acc {
 
-	static const uint32 RE_CON_INTERVAL_SEC = 10; //xÃë³¢ÊÔÖØÁ¬
+	static const uint32 RE_CON_INTERVAL_SEC = 10; //xç§’å°è¯•é‡è¿
 
 
 
@@ -24,14 +24,14 @@ namespace acc {
 
 	class ADFacadeMgr;
 	class ConMgr;
-	//svrÁ¬½Óacc·şÎñÆ÷£¬×÷Îª¿Í»§¶Ë
+	//svrè¿æ¥accæœåŠ¡å™¨ï¼Œä½œä¸ºå®¢æˆ·ç«¯
 	class ADClientCon : public lc::ClientCon
 	{
 	private:
-		const uint32 m_acc_id;	        // ConMgr::m_vec_con Ë÷Òı
-		CId2Session   m_id_2_s;			//acc cid 2 session. ÓÃcid×ökey¾Í¿ÉÒÔÁË£¬ÒòÎªÀ´Ô´¶¼ÊÇÒ»¸öacc¡£
-		bool         m_is_reg;			//true ±íÊ¾Ò»Ì¨ Ïòacc ×¢²á³É¹¦µÄsvr id
-		lc::Timer    m_recon_tm;	    //ÖØÁ¬acc¶¨Ê±Æ÷
+		const uint32 m_acc_id;	        // ConMgr::m_vec_con ç´¢å¼•
+		CId2Session   m_id_2_s;			//acc cid 2 session. ç”¨cidåškeyå°±å¯ä»¥äº†ï¼Œå› ä¸ºæ¥æºéƒ½æ˜¯ä¸€ä¸ªaccã€‚
+		bool         m_is_reg;			//true è¡¨ç¤ºä¸€å° å‘acc æ³¨å†ŒæˆåŠŸçš„svr id
+		lc::Timer    m_recon_tm;	    //é‡è¿accå®šæ—¶å™¨
 		ADFacadeMgr &m_facade;
 		ConMgr      &m_con_mgr;
 
@@ -45,10 +45,10 @@ namespace acc {
 		virtual void OnDisconnected() override final;
 
 		const Session *FindSession(const SessionId &id);
-		//·¢ËÍ acc::ASMsg
+		//å‘é€ acc::ASMsg
 		bool Send(const acc::ASMsg &as_data);
 		bool Send(acc::Cmd as_cmd, const std::string &as_msg);
-		//·¢ËÍ acc::ASMsg
+		//å‘é€ acc::ASMsg
 		template<class CtrlMsg>
 		bool Send(acc::Cmd cmd, const CtrlMsg &send);
 
@@ -71,10 +71,10 @@ namespace acc {
 		std::vector<ADClientCon *> m_vec_con;
 		ADFacadeMgr &m_facade;
 		uint16 m_svr_id;
-		bool m_is_fatal;      //ÑÏÖØ´íÎó×´Ì¬£¬¶Ï¿ª£¬²»ÔÙÁ¬½Ó£¬²»ÔÙĞŞ¸´£¬µÈÖØÆô¡£
+		bool m_is_fatal;      //ä¸¥é‡é”™è¯¯çŠ¶æ€ï¼Œæ–­å¼€ï¼Œä¸å†è¿æ¥ï¼Œä¸å†ä¿®å¤ï¼Œç­‰é‡å¯ã€‚
 		bool m_is_reg; 
 		bool m_is_verify_svr;
-		MsgAccSeting m_seting; //Èç¹ûÓĞĞÅÏ¢£¬ADClientConÁ¬½Ó³É¹¦»á·¢ËÍÉèÖÃĞÄÌøĞÅÏ¢µ½acc
+		MsgAccSeting m_seting; //å¦‚æœæœ‰ä¿¡æ¯ï¼ŒADClientConè¿æ¥æˆåŠŸä¼šå‘é€è®¾ç½®å¿ƒè·³ä¿¡æ¯åˆ°acc
 
 	public:
 		ConMgr(ADFacadeMgr &facade);
@@ -82,8 +82,8 @@ namespace acc {
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 		bool AddAcc(const Addr &addr, bool is_verify_svr = false);
 		const std::vector<ADClientCon *> &GetAllCon() const { return m_vec_con; };
-		//ÖÂÃü´íÎó£¬ÉèÖÃÕû¸ösvrÎŞĞ§
-		//ÇëÇóÈÎÒâÒ»¸öacc×¢²áÊ§Ğ§£¬´¥·¢¡£Í¨³£ÅäÖÃ´íÎóÒıÆğ£¬µÈÖØÆôĞŞ¸´°É¡£
+		//è‡´å‘½é”™è¯¯ï¼Œè®¾ç½®æ•´ä¸ªsvræ— æ•ˆ
+		//è¯·æ±‚ä»»æ„ä¸€ä¸ªaccæ³¨å†Œå¤±æ•ˆï¼Œè§¦å‘ã€‚é€šå¸¸é…ç½®é”™è¯¯å¼•èµ·ï¼Œç­‰é‡å¯ä¿®å¤å§ã€‚
 		void SetFatal();
 		uint16 GetSvrId() const { return m_svr_id; }
 		bool IsVerify() const { return m_is_verify_svr; }

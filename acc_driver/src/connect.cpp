@@ -23,7 +23,7 @@ void ADClientCon::OnRecv(const lc::MsgPack &msg)
 
 	if (CMD_RSP_REG != as_data.cmd)
 	{
-		L_COND(m_is_reg, "must reg ok before rev other cmd %d", as_data.cmd);//svr¥¶¿Ì∑«CMD_RSP_REGœ˚œ¢,±ÿ–Î“—◊¢≤·°£
+		L_COND(m_is_reg, "must reg ok before rev other cmd %d", as_data.cmd);//svrÂ§ÑÁêÜÈùûCMD_RSP_REGÊ∂àÊÅØ,ÂøÖÈ°ªÂ∑≤Ê≥®ÂÜå„ÄÇ
 	}
 
 	switch (as_data.cmd)
@@ -115,7 +115,7 @@ void acc::ADClientCon::HandleRspReg(const ASMsg &msg)
 		m_con_mgr.SetFatal();
 		return;
 	}
-	L_COND(rsp.svr_id == m_con_mgr.GetSvrId());//ø…ƒ‹«Î«Û¥˙¬ÎID≥ˆ¥Ì
+	L_COND(rsp.svr_id == m_con_mgr.GetSvrId());//ÂèØËÉΩËØ∑Ê±Ç‰ª£Á†ÅIDÂá∫Èîô
 
 	m_is_reg = true;
 	m_con_mgr.SetRegResult(true);
@@ -159,7 +159,7 @@ void acc::ADClientCon::HandleMsgForward(const ASMsg &msg)
 		L_ERROR("can't find session when rev forward msg. %lld %d", id.cid, id.acc_id);
 		return;
 	}
-	//’‚¿Ôªπ√ª”–◊ˆª·ª∞≤È’“£¨µ»”√ªß–Ë“™∑¢ÀÕœ˚œ¢µΩclient‘Ÿ≤È’“.
+	//ËøôÈáåËøòÊ≤°ÊúâÂÅö‰ºöËØùÊü•ÊâæÔºåÁ≠âÁî®Êà∑ÈúÄË¶ÅÂèëÈÄÅÊ∂àÊÅØÂà∞clientÂÜçÊü•Êâæ.
 	m_facade.OnRevClientMsg(it->second, f_msg.cmd, f_msg.msg, f_msg.msg_len);
 }
 
@@ -169,7 +169,7 @@ void acc::ADClientCon::HandleVerifyReq(const ASMsg &msg)
 	bool ret = f_msg.Parse(msg.msg, msg.msg_len);
 	L_COND(ret, "parse ctrl msg fail");
 
-	SessionId tmp_id; //¡Ÿ ±ª·ª∞id
+	SessionId tmp_id; //‰∏¥Êó∂‰ºöËØùid
 	tmp_id.cid = f_msg.cid;
 	tmp_id.acc_id = m_acc_id;
 	m_facade.OnRevVerifyReq(tmp_id, f_msg.cmd, f_msg.msg, f_msg.msg_len);
