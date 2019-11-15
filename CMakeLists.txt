@@ -28,7 +28,6 @@ LINK_DIRECTORIES(
   #项目引用第三方库
   ${PROJECT_SOURCE_DIR}/acc_proto/lib
   ${PROJECT_SOURCE_DIR}/acc_driver/lib
-  ${PROJECT_SOURCE_DIR}/external/libevent_cpp/External/libevent-2.1.8-stable/out/lib
   ${PROJECT_SOURCE_DIR}/external/svr_util/lib
   ${PROJECT_SOURCE_DIR}/external/libevent_cpp/lib
 

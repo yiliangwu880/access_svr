@@ -20,5 +20,5 @@ file(GLOB_RECURSE SRCS2  ${PROJECT_SOURCE_DIR} "*.cpp")
 ADD_EXECUTABLE(${project_name} ${SRCS} ${SRCS2})
 
 # 设置链接库
-target_link_libraries(${project_name} acc_driver svr_util libevent_cpp acc_proto libevent.a)
+target_link_libraries(${project_name} acc_driver svr_util libcevent_cpp.a acc_proto)
 

@@ -21,5 +21,5 @@ ADD_EXECUTABLE(${project_name} ${SRCS} ${SRCS2})
 SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin/samples/${project_name})
 
 # 设置链接库
-target_link_libraries(${project_name} acc_driver svr_util libevent_cpp acc_proto libevent.a)
+target_link_libraries(${project_name} acc_driver svr_util cevent_cpp acc_proto)
 

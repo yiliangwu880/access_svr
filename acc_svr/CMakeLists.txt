@@ -22,5 +22,5 @@ ADD_EXECUTABLE(acc_svr ${SRCS} ${SRCS2})
 #ADD_DEPENDENCIES(acc_svr svr_util libevent_cpp)
 
 # 设置链接库
-target_link_libraries(acc_svr svr_util libevent_cpp acc_proto libevent.a)
+target_link_libraries(acc_svr svr_util libcevent_cpp.a acc_proto )
 
