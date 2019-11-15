@@ -1,9 +1,9 @@
 /*
-	²âÊÔ svr Á¬½Ó¶Ï¿ª£¬»Ö¸´¡£²½Öè£º
-	svr1 £¬svr2 Á¬½Óacc
-	clientÈÏÖ¤£¬ÉèÖÃuin. 
-	svr2¶Ï¿ª£¬ÖØÁ¬¡£
-	svr2 »á»°£¬uin»Ö¸´¡£
+	æµ‹è¯• svr è¿æ¥æ–­å¼€ï¼Œæ¢å¤ã€‚æ­¥éª¤ï¼š
+	svr1 ï¼Œsvr2 è¿æ¥acc
+	clientè®¤è¯ï¼Œè®¾ç½®uin. 
+	svr2æ–­å¼€ï¼Œé‡è¿ã€‚
+	svr2 ä¼šè¯ï¼Œuinæ¢å¤ã€‚
 
 */
 
@@ -59,10 +59,10 @@ namespace
 
 		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
-		//µ±ÉèÖÃuin
+		//å½“è®¾ç½®uin
 		virtual void OnRevBroadcastUinToSession(uint64 uin);
 
-		//clientÈÏÖ¤³É¹¦£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+		//clientè®¤è¯æˆåŠŸï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 		virtual void OnClientConnect(const Session &session);
 	};
 
@@ -71,11 +71,11 @@ namespace
 	public:
 		enum class State
 		{
-			WAIT_REG, //svr1 £¬svr2 Á¬½Óacc
-			WAIT_CLIENT_VERIFY,//clientÈÏÖ¤
-			WAIT_SET_UIN_OK, //ÉèÖÃuin
-			WAIT_SVR2_RECON, //svr2¶Ï¿ª£¬ÖØÁ¬,µÈÁ¬½Ó³É¹¦
-			WAIT_SVR2_REVERT, //svr2 »á»°£¬uin»Ö¸´¡£
+			WAIT_REG, //svr1 ï¼Œsvr2 è¿æ¥acc
+			WAIT_CLIENT_VERIFY,//clientè®¤è¯
+			WAIT_SET_UIN_OK, //è®¾ç½®uin
+			WAIT_SVR2_RECON, //svr2æ–­å¼€ï¼Œé‡è¿,ç­‰è¿æ¥æˆåŠŸ
+			WAIT_SVR2_REVERT, //svr2 ä¼šè¯ï¼Œuinæ¢å¤ã€‚
 			END,
 		};
 
@@ -153,7 +153,7 @@ namespace
 			m_tm.StartTimer(1 * 1000, std::bind(&FollowMgr::InitNewSvr2, this));
 		};
 		m_tm.StopTimer();
-		m_tm.StartTimer(1, f);//µÈÏÂµ÷ÓÃ£¬µÚÒ»°²È«£¬µÚ¶şµÈaccÊÍ·Å¾ÉµÄsvr2×¢²áĞÅÏ¢¡£
+		m_tm.StartTimer(1, f);//ç­‰ä¸‹è°ƒç”¨ï¼Œç¬¬ä¸€å®‰å…¨ï¼Œç¬¬äºŒç­‰accé‡Šæ”¾æ—§çš„svr2æ³¨å†Œä¿¡æ¯ã€‚
 	}
 
 

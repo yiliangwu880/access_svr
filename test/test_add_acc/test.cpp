@@ -1,10 +1,10 @@
 /*
-	²âÊÔ ADFacadeMgr::AddAcc
-	Æô¶¯2Ì¨ acc, ÔËÐÐÆÚ µ÷ÓÃ ADFacadeMgr::AddAcc Á¬½ÓÈç2Ì¨acc.
-	acc2 ¹Ø±Õ£¬
-	ÔÙ²âÊÔÏÂ¶ÏÏßÖØÁ¬
-	acc2 ¿ªÆô
-	½áÊø
+	æµ‹è¯• ADFacadeMgr::AddAcc
+	å¯åŠ¨2å° acc, è¿è¡ŒæœŸ è°ƒç”¨ ADFacadeMgr::AddAcc è¿žæŽ¥å¦‚2å°acc.
+	acc2 å…³é—­ï¼Œ
+	å†æµ‹è¯•ä¸‹æ–­çº¿é‡è¿ž
+	acc2 å¼€å¯
+	ç»“æŸ
 
 */
 

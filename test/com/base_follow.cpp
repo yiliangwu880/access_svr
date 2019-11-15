@@ -167,11 +167,11 @@ BaseFunTestMgr::BaseFunTestMgr()
 	m_b_svr3.m_svr_id = 3;
 }
 namespace{
-	//¼ò»¯½â°ü²Ù×÷¡£¸³Öµ²¢ÒÆ¶¯Ö¸Õë
+	//ç®€åŒ–è§£åŒ…æ“ä½œã€‚èµ‹å€¼å¹¶ç§»åŠ¨æŒ‡é’ˆ
 	template<class T>
 	void ParseCp(T &dst, const char *&src)
 	{
-		dst = (decltype(dst))(*src); // ÀàËÆ dst = (uint32 &)(*src)
+		dst = (decltype(dst))(*src); // ç±»ä¼¼ dst = (uint32 &)(*src)
 		src = src + sizeof(dst);
 	}
 
@@ -183,7 +183,7 @@ bool TempParse(MsgAccSeting &req, const char *tcp_pack, uint16 tcp_pack_len)
 		L_ERROR("e1");
 		return false;
 	}
-	const char *cur = tcp_pack; //¶ÁÈ¡Ö¸Õë
+	const char *cur = tcp_pack; //è¯»å–æŒ‡é’ˆ
 
 	ParseCp(req.hbi.req_cmd, cur);
 	ParseCp(req.hbi.rsp_cmd, cur);
@@ -267,7 +267,7 @@ void BaseFunTestMgr::StartHeartbeatTest()
 	UNIT_INFO("start heartbeat test");
 	UNIT_ASSERT(m_state == State::RUN_CORRECT_FOLLOW);
 	m_state = State::RUN_HEARBEAT;
-	// svrÁ¬½Ó¶ÔÏó»¹ÊÇ¸´ÓÃ BaseFlowSvr´´½¨µÄ
+	// svrè¿æ¥å¯¹è±¡è¿˜æ˜¯å¤ç”¨ BaseFlowSvråˆ›å»ºçš„
 	m_svr1.m_svr_cb = &m_h_svr;
 	m_h_svr.Start();
 
@@ -285,7 +285,7 @@ void BaseFunTestMgr::StartHeartbeatTest()
 
 void BaseFunTestMgr::CheckBearHeatEnd()
 {
-	//ÑéÊÕÔÙ²âÊÔ×´Ì¬£¬ÒòÎªclient, svr,ÊÇÍøÂçÏûÏ¢½ÓÊÕ²Å¸Ä±ä×îºó×´Ì¬£¬²»Í¬²½
+	//éªŒæ”¶å†æµ‹è¯•çŠ¶æ€ï¼Œå› ä¸ºclient, svr,æ˜¯ç½‘ç»œæ¶ˆæ¯æ¥æ”¶æ‰æ”¹å˜æœ€åçŠ¶æ€ï¼Œä¸åŒæ­¥
 	static auto f = [&]()
 	{
 		UNIT_ASSERT(m_state == State::RUN_HEARBEAT);

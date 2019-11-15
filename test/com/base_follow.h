@@ -1,7 +1,7 @@
 /*
-	¿É¸´ÓÃ²âÊÔclient svr.
-	acc_driver.h Ã¿¸ö¹¦ÄÜµÄ´ó¸ÅÅÜÒ»±é¡£
-	Ä³Ğ©ÌØÊâÀı×Ó²»°üº¬¡£
+	å¯å¤ç”¨æµ‹è¯•client svr.
+	acc_driver.h æ¯ä¸ªåŠŸèƒ½çš„å¤§æ¦‚è·‘ä¸€éã€‚
+	æŸäº›ç‰¹æ®Šä¾‹å­ä¸åŒ…å«ã€‚
 */
 #pragma once
 #include <string>
@@ -67,26 +67,26 @@ public:
 public:
 	BaseFlowSvr(BaseFunTestMgr &mgr);
 
-	//»Øµ÷×¢²á½á¹û, Ê§°Ü¾ÍÊÇÅäÖÃ´íÎóÁË£¬ÎŞ·¨ĞŞ¸´¡£ÖØÆô½ø³Ì°É¡£
-	//@svr_id = 0±íÊ¾Ê§°Ü
+	//å›è°ƒæ³¨å†Œç»“æœ, å¤±è´¥å°±æ˜¯é…ç½®é”™è¯¯äº†ï¼Œæ— æ³•ä¿®å¤ã€‚é‡å¯è¿›ç¨‹å§ã€‚
+	//@svr_id = 0è¡¨ç¤ºå¤±è´¥
 	virtual void OnRegResult(uint16 svr_id) ;
 
-	//½ÓÊÕclientÏûÏ¢°üµ½svr
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ…åˆ°svr
 	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) ;
 
-	//½ÓÊÕclientÏûÏ¢°ü.ÇëÇóÈÏÖ¤µÄ°ü
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ….è¯·æ±‚è®¤è¯çš„åŒ…
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len) ;
 
-	//client¶ÏÏßÍ¨Öª
+	//clientæ–­çº¿é€šçŸ¥
 	virtual void OnClientDisCon(const SessionId &id) ;
 
-	//client½ÓÈë£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+	//clientæ¥å…¥ï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 	virtual void OnClientConnect(const Session &session) ;
 
-	//@id ÇëÇó²ÎÊıÒ»Ñù
-	//@main_cmd ÇëÇó²ÎÊıÒ»Ñù
-	//@svr_id 0 ±íÊ¾Ê§°Ü¡£
-	//²Î¿¼ SetMainCmd2Svr
+	//@id è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@main_cmd è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@svr_id 0 è¡¨ç¤ºå¤±è´¥ã€‚
+	//å‚è€ƒ SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) ;
 };
 
@@ -112,7 +112,7 @@ public:
 	virtual void OnDisconnected() override final;
 };
 
-// svrÁ¬½Ó¶ÔÏó»¹ÊÇ¸´ÓÃ BaseFlowSvr´´½¨µÄ
+// svrè¿æ¥å¯¹è±¡è¿˜æ˜¯å¤ç”¨ BaseFlowSvråˆ›å»ºçš„
 class HearBeatSvr : public ISvrCallBack
 {
 public:
@@ -129,26 +129,26 @@ public:
 public:
 	HearBeatSvr(BaseFunTestMgr &mgr);
 	void Start();
-	//»Øµ÷×¢²á½á¹û, Ê§°Ü¾ÍÊÇÅäÖÃ´íÎóÁË£¬ÎŞ·¨ĞŞ¸´¡£ÖØÆô½ø³Ì°É¡£
-	//@svr_id = 0±íÊ¾Ê§°Ü
+	//å›è°ƒæ³¨å†Œç»“æœ, å¤±è´¥å°±æ˜¯é…ç½®é”™è¯¯äº†ï¼Œæ— æ³•ä¿®å¤ã€‚é‡å¯è¿›ç¨‹å§ã€‚
+	//@svr_id = 0è¡¨ç¤ºå¤±è´¥
 	virtual void OnRegResult(uint16 svr_id);
 
-	//½ÓÊÕclientÏûÏ¢°üµ½svr
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ…åˆ°svr
 	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//½ÓÊÕclientÏûÏ¢°ü.ÇëÇóÈÏÖ¤µÄ°ü
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ….è¯·æ±‚è®¤è¯çš„åŒ…
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//client¶ÏÏßÍ¨Öª
+	//clientæ–­çº¿é€šçŸ¥
 	virtual void OnClientDisCon(const SessionId &id);
 
-	//client½ÓÈë£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+	//clientæ¥å…¥ï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 	virtual void OnClientConnect(const Session &session);
 
-	//@id ÇëÇó²ÎÊıÒ»Ñù
-	//@main_cmd ÇëÇó²ÎÊıÒ»Ñù
-	//@svr_id 0 ±íÊ¾Ê§°Ü¡£
-	//²Î¿¼ SetMainCmd2Svr
+	//@id è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@main_cmd è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@svr_id 0 è¡¨ç¤ºå¤±è´¥ã€‚
+	//å‚è€ƒ SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
@@ -165,7 +165,7 @@ public:
 
 	BaseFunTestMgr &m_mgr;
 	State m_state;
-	uint32 m_id; //id,0¿ªÊ¼£¬Êı×éË÷Òı
+	uint32 m_id; //id,0å¼€å§‹ï¼Œæ•°ç»„ç´¢å¼•
 
 public:
 	BDClient(BaseFunTestMgr &mgr);
@@ -190,7 +190,7 @@ public:
 
 	BaseFunTestMgr &m_mgr;
 	State m_state;
-	std::set<uint64> m_client_set; //Í³¼Æclient¼¯ºÏ
+	std::set<uint64> m_client_set; //ç»Ÿè®¡clienté›†åˆ
 	uint32 m_broadCmd_cnt;
 	uint32 m_broadpartCmd_cnt;
 	SessionId m_anyone_sid;
@@ -202,26 +202,26 @@ public:
 	void ClientRevBroadCmd();
 	void ClientRevBroadPartCmd();
 	void CheckBroadEnd();
-	//»Øµ÷×¢²á½á¹û, Ê§°Ü¾ÍÊÇÅäÖÃ´íÎóÁË£¬ÎŞ·¨ĞŞ¸´¡£ÖØÆô½ø³Ì°É¡£
-	//@svr_id = 0±íÊ¾Ê§°Ü
+	//å›è°ƒæ³¨å†Œç»“æœ, å¤±è´¥å°±æ˜¯é…ç½®é”™è¯¯äº†ï¼Œæ— æ³•ä¿®å¤ã€‚é‡å¯è¿›ç¨‹å§ã€‚
+	//@svr_id = 0è¡¨ç¤ºå¤±è´¥
 	virtual void OnRegResult(uint16 svr_id);
 
-	//½ÓÊÕclientÏûÏ¢°üµ½svr
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ…åˆ°svr
 	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//½ÓÊÕclientÏûÏ¢°ü.ÇëÇóÈÏÖ¤µÄ°ü
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ….è¯·æ±‚è®¤è¯çš„åŒ…
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//client¶ÏÏßÍ¨Öª
+	//clientæ–­çº¿é€šçŸ¥
 	virtual void OnClientDisCon(const SessionId &id);
 
-	//client½ÓÈë£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+	//clientæ¥å…¥ï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 	virtual void OnClientConnect(const Session &session);
 
-	//@id ÇëÇó²ÎÊıÒ»Ñù
-	//@main_cmd ÇëÇó²ÎÊıÒ»Ñù
-	//@svr_id 0 ±íÊ¾Ê§°Ü¡£
-	//²Î¿¼ SetMainCmd2Svr
+	//@id è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@main_cmd è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@svr_id 0 è¡¨ç¤ºå¤±è´¥ã€‚
+	//å‚è€ƒ SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
@@ -269,26 +269,26 @@ public:
 
 	void ChangeRoute();
 
-	//»Øµ÷×¢²á½á¹û, Ê§°Ü¾ÍÊÇÅäÖÃ´íÎóÁË£¬ÎŞ·¨ĞŞ¸´¡£ÖØÆô½ø³Ì°É¡£
-	//@svr_id = 0±íÊ¾Ê§°Ü
+	//å›è°ƒæ³¨å†Œç»“æœ, å¤±è´¥å°±æ˜¯é…ç½®é”™è¯¯äº†ï¼Œæ— æ³•ä¿®å¤ã€‚é‡å¯è¿›ç¨‹å§ã€‚
+	//@svr_id = 0è¡¨ç¤ºå¤±è´¥
 	virtual void OnRegResult(uint16 svr_id);
 
-	//½ÓÊÕclientÏûÏ¢°üµ½svr
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ…åˆ°svr
 	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//½ÓÊÕclientÏûÏ¢°ü.ÇëÇóÈÏÖ¤µÄ°ü
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ….è¯·æ±‚è®¤è¯çš„åŒ…
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//client¶ÏÏßÍ¨Öª
+	//clientæ–­çº¿é€šçŸ¥
 	virtual void OnClientDisCon(const SessionId &id);
 
-	//client½ÓÈë£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+	//clientæ¥å…¥ï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 	virtual void OnClientConnect(const Session &session);
 
-	//@id ÇëÇó²ÎÊıÒ»Ñù
-	//@main_cmd ÇëÇó²ÎÊıÒ»Ñù
-	//@svr_id 0 ±íÊ¾Ê§°Ü¡£
-	//²Î¿¼ SetMainCmd2Svr
+	//@id è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@main_cmd è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@svr_id 0 è¡¨ç¤ºå¤±è´¥ã€‚
+	//å‚è€ƒ SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 };
 
@@ -332,31 +332,31 @@ public:
 	AllADFacadeMgr &GetFacade();
 
 	virtual void OnRevBroadcastUinToSession(uint64 uin) ;
-	//»Øµ÷×¢²á½á¹û, Ê§°Ü¾ÍÊÇÅäÖÃ´íÎóÁË£¬ÎŞ·¨ĞŞ¸´¡£ÖØÆô½ø³Ì°É¡£
-	//@svr_id = 0±íÊ¾Ê§°Ü
+	//å›è°ƒæ³¨å†Œç»“æœ, å¤±è´¥å°±æ˜¯é…ç½®é”™è¯¯äº†ï¼Œæ— æ³•ä¿®å¤ã€‚é‡å¯è¿›ç¨‹å§ã€‚
+	//@svr_id = 0è¡¨ç¤ºå¤±è´¥
 	virtual void OnRegResult(uint16 svr_id) {};
 
-	//½ÓÊÕclientÏûÏ¢°üµ½svr
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ…åˆ°svr
 	virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len) {};
 
-	//½ÓÊÕclientÏûÏ¢°ü.ÇëÇóÈÏÖ¤µÄ°ü
+	//æ¥æ”¶clientæ¶ˆæ¯åŒ….è¯·æ±‚è®¤è¯çš„åŒ…
 	virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
-	//client¶ÏÏßÍ¨Öª
+	//clientæ–­çº¿é€šçŸ¥
 	virtual void OnClientDisCon(const SessionId &id) {};
 
-	//client½ÓÈë£¬´´½¨»á»°¡£ ¸ÅÄîÀàËÆ ĞÂsocketÁ¬½Ó¿Í»§¶Ë
+	//clientæ¥å…¥ï¼Œåˆ›å»ºä¼šè¯ã€‚ æ¦‚å¿µç±»ä¼¼ æ–°socketè¿æ¥å®¢æˆ·ç«¯
 	virtual void OnClientConnect(const Session &session) {};
 
-	//@id ÇëÇó²ÎÊıÒ»Ñù
-	//@main_cmd ÇëÇó²ÎÊıÒ»Ñù
-	//@svr_id 0 ±íÊ¾Ê§°Ü¡£
-	//²Î¿¼ SetMainCmd2Svr
+	//@id è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@main_cmd è¯·æ±‚å‚æ•°ä¸€æ ·
+	//@svr_id 0 è¡¨ç¤ºå¤±è´¥ã€‚
+	//å‚è€ƒ SetMainCmd2Svr
 	virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id) {};
 };
 
 
-//»ù±¾¹¦ÄÜ£¬Á÷³Ì²âÊÔ
+//åŸºæœ¬åŠŸèƒ½ï¼Œæµç¨‹æµ‹è¯•
 class BaseFunTestMgr 
 {
 public:
@@ -364,17 +364,17 @@ public:
 	{
 		RUN_CORRECT_FOLLOW,
 		RUN_HEARBEAT,
-		RUN_BROADCAST_DISCON, //²âÊÔ¹ã²¥£¬ÌßÈË
-		RUN_ROUTE,//Â·ÓÉÉèÖÃ
+		RUN_BROADCAST_DISCON, //æµ‹è¯•å¹¿æ’­ï¼Œè¸¢äºº
+		RUN_ROUTE,//è·¯ç”±è®¾ç½®
 		RUN_BROADCAST_UIN,
 		END,
 	};
 
 	//step 1  RUN_CORRECT_FOLLOW
 	BaseFlowClient m_client;
-	BaseFlowSvr m_svr; //´ú±íAllADFacadeMgr::Obj()µÄ×´Ì¬»ú£¬»á¸Ä±äÎªÎŞĞ§¡£
+	BaseFlowSvr m_svr; //ä»£è¡¨AllADFacadeMgr::Obj()çš„çŠ¶æ€æœºï¼Œä¼šæ”¹å˜ä¸ºæ— æ•ˆã€‚
 
-	//step 2 ĞÄÌø²âÊÔ
+	//step 2 å¿ƒè·³æµ‹è¯•
 	HearBeatClient m_h_client;
 	HearBeatSvr m_h_svr;
 

@@ -1,7 +1,7 @@
 /*
-	×ÛºÏ²âÊÔ2£º 1ÄÚÈÝÌ«¶àÁË£¬·ÖÀëÒ»²¿·Ö³öÀ´¡£
-	acc×î´ó clientÊýÁ¿
-	client Á¬½Ó³¬Ê±²»·¢ÏûÏ¢¡£
+	ç»¼åˆæµ‹è¯•2ï¼š 1å†…å®¹å¤ªå¤šäº†ï¼Œåˆ†ç¦»ä¸€éƒ¨åˆ†å‡ºæ¥ã€‚
+	accæœ€å¤§ clientæ•°é‡
+	client è¿žæŽ¥è¶…æ—¶ä¸å‘æ¶ˆæ¯ã€‚
 
 
 */
@@ -75,7 +75,7 @@ namespace
 	public:
 		enum class State
 		{
-			WAIT_REG,                    //svr reg, wait svr1 Á¬½Óacc
+			WAIT_REG,                    //svr reg, wait svr1 è¿žæŽ¥acc
 			WAIT_CLIENT_NO_MSG_TIMEOUT,  //client_no_msg connect, wait client_no_msg timeout
 			WAIT_MAX_CLIENT_REV_MAX_MSG, //disconnect client_no_msg, set max client num. wait max client REV MSG.
 			WAIT_MAX_CLIENT_DISCON,      //wait max client discon.
@@ -121,7 +121,7 @@ namespace
 		UNIT_INFO("rev max client num msg. cmd=%d", cmd);
 		if (CMD_MAX_CLIENT_RSP_CMD == cmd)
 		{
-			UNIT_ASSERT(idx == m_follow->m_max_num_clients.size()-1);//È·±£×îºóÒ»¸ö
+			UNIT_ASSERT(idx == m_follow->m_max_num_clients.size()-1);//ç¡®ä¿æœ€åŽä¸€ä¸ª
 			UNIT_ASSERT(FollowMgr::State::WAIT_MAX_CLIENT_REV_MAX_MSG == m_follow->m_state);
 			UNIT_ASSERT(cmd == CMD_MAX_CLIENT_RSP_CMD);
 			UNIT_ASSERT(msg == "max");
