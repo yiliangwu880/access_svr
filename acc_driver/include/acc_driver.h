@@ -24,7 +24,7 @@ main()
 #include "svr_util/include/singleton.h"
 #include "svr_util/include/easy_code.h"
 #include "svr_util/include/typedef.h"
-#include "../acc_proto/include/proto.h"
+#include "../../acc_proto/include/proto.h"
 
 namespace acc {
 	struct Addr

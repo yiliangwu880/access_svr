@@ -28,5 +28,11 @@ vs浏览代码：
 使用方法：
 	1 编译通过
 	2 bin目录生成acc_svr，就是接入服程序。
-	3 用户自定义的业务服务器，使用驱动库，可以简单地实现连接接入服。 驱动库include文件和库文件目录： access_svr\acc_driver\include\ access_svr\acc_driver\lib\
+	3 用户自定义的业务服务器，使用驱动库，可以简单地实现连接接入服。 驱动库include文件和库文件目录： 
+	{
+		access_svr\acc_driver\include\ 
+		access_svr\acc_driver\lib\
+		access_svr\acc_proto\lib\
+		
+	}
 

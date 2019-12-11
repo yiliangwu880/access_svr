@@ -4,7 +4,7 @@ set(project_name "acc_driver")
 # 项目信息
 project (${project_name} CXX)
 
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/${project_name}/lib)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 INCLUDE_DIRECTORIES(system ${PROJECT_SOURCE_DIR}/include)
 INCLUDE_DIRECTORIES(system ../external/)
