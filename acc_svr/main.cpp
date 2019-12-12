@@ -21,11 +21,13 @@ public:
 	}
 };
 
-
-void OnExitProccess()
+//执行 ./acc_svr stop的时候停进程
+void CheckStopProcess()
 {
-	L_DEBUG("OnExitProccess");
-	lc::EventMgr::Obj().StopDispatch();
+	if (SingleProgress::Obj().IsExit())
+	{
+		lc::EventMgr::Obj().StopDispatch();
+	}
 }
 
 namespace {
@@ -36,7 +38,11 @@ namespace {
 			auto fun = std::bind(&SuMgr::OnTimer, &SuMgr::Obj());
 			L_COND_F(loop_tm.StartTimer(30, fun, true));
 		}
-
+		{//stop process
+			static lc::Timer loop_tm;
+			auto fun = std::bind(&CheckStopProcess);
+			L_COND_F(loop_tm.StartTimer(1000*1, fun, true));
+		}
 		SvrCtrlMsgDispatch::Obj().Init();
 		if (!Server::Obj().Init())
 		{
@@ -60,7 +66,7 @@ int main(int argc, char* argv[])
 	}
 
 	//start or stop proccess
-	SPMgr::Obj().Check(argc, argv, "acc_svr", OnExitProccess);
+	SingleProgress::Obj().Check(argc, argv, "acc_svr");
 
 	lc::EventMgr::Obj().Init(&MyLcLog::Obj());
 
