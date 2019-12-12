@@ -101,7 +101,7 @@ namespace acc {
 		//@svr_id = 0表示失败
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
-		//接收client消息包.请求认证的包
+		//接收client请求认证的包. 也就是第一个包
 		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//设置会话自定义映射main_cmd to svr_id
