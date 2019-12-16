@@ -74,7 +74,7 @@ namespace acc {
 		//请求验证结果. 
 		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);
 
-		//一个svr向所有svr的指定会话广播uin
+		//广播uin 一个svr向所有svr的指定会话
 		bool BroadcastUinToSession(const SessionId &id, uint64 uin);
 
 		//发送消息包到client

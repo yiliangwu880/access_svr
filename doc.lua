@@ -53,8 +53,9 @@
 			认证成功创建 client 和 svr的session。
 			svr 主动断开session。
 			client 断开，session 销毁。
-			svr 认证client,然后触发创建session. 等svr认证超时,断开。
-			svr 主动断开 所有session。
+			svr 认证client,然后触发所有svr创建session. 等svr认证超时,断开。
+			svr 请求设置session的uin,并广播给所有svr.
+			svr 请求主动断开 所有session。
 			svr 请求设置 main_cmd映射svr_id。
 		}
 		svr 连接注册。
