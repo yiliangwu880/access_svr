@@ -171,28 +171,28 @@ namespace acc {
 
 
 	// 设定心跳检查功能，心跳包信息{cmd, interval, rsp cmd}
+	// 默认不需要心跳功能
 	struct HeartBeatInfo
 	{
-		uint32 req_cmd;	            //客户端请求消息号
-		uint32 rsp_cmd;	            //svr 响应给客户端额消息号
-		uint32 interval_sec;        //心跳过期间隔秒
+		uint32 req_cmd = 0;	            //客户端请求消息号
+		uint32 rsp_cmd = 0;	            //svr 响应给客户端额消息号
+		uint32 interval_sec = 0;        //心跳过期间隔秒
 	};
 
 	struct ClientLimitInfo
 	{
-		uint32 max_num;			    //acc 支持 client最大数量
+		uint32 max_num;			    //acc 支持 client最大数量，默认 uint32最大数
 		uint32 rsp_cmd;				//acc超出 client数量，给client响应. cmd
 		std::string rsp_msg;	    //acc超出 client数量，给client响应. msg,不用效率的格式。方便内存保存。
 	};
 
 	//	svr请求设置acc设置。
-	//  最大acc 可用client数量,已经回应 client消息包
 	struct  MsgAccSeting
 	{
 		MsgAccSeting();
 
-		HeartBeatInfo hbi;
-		ClientLimitInfo cli;
+		HeartBeatInfo hbi;			//client 和 acc 心跳相关
+		ClientLimitInfo cli;		//client 相关设置
 		uint32 no_msg_interval_sec;        //client连接成功，不发消息的超时时间。
  
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);

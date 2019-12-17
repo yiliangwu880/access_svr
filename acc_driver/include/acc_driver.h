@@ -61,6 +61,7 @@ namespace acc {
 		ADFacadeMgr();
 		~ADFacadeMgr();
 
+		//acc设置，具体内容参考 MsgAccSeting
 		//设置acc最大 client数量.
 		//当未注册时，会请求注册后，自动发送给acc。
 		//当已经注册了，自动马上发送给acc。

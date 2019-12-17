@@ -209,7 +209,7 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 
-	L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, AccSeting::Obj().m_seting.hbi.req_cmd, AccSeting::Obj().m_seting.hbi.rsp_cmd);
+	//L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, AccSeting::Obj().m_seting.hbi.req_cmd, AccSeting::Obj().m_seting.hbi.rsp_cmd);
 	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{
