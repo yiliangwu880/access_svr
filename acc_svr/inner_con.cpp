@@ -57,7 +57,7 @@ namespace
 		L_COND(ret, "parse ctrl msg fail");
 		MsgRspReg rsp;
 		rsp.svr_id = req.svr_id;
-		L_DEBUG("Parse_CMD_REQ_REG svr_id=%d, is_verify=%d", req.svr_id, req.is_verify);
+		L_DEBUG("Parse_CMD_REQ_REG svr_id=%x, is_verify=%d", req.svr_id, req.is_verify);
 		if (!con.RegSvrId(req.svr_id))
 		{
 			L_WARN("reg fail, svr id=%d", req.svr_id);
@@ -121,7 +121,7 @@ namespace
 		MsgBroadcastUin req;
 		bool ret = CtrlMsgProto::Parse(msg, req);
 		L_COND(ret, "parse ctrl msg fail");
-		L_DEBUG("Parse_CMD_REQ_BROADCAST_UIN uin=%llx", req.uin);
+	//	L_DEBUG("Parse_CMD_REQ_BROADCAST_UIN uin=%llx", req.uin);
 		if (req.cid == 0)
 		{
 			L_WARN("CMD_REQ_BROADCAST_UIN cid==0");
@@ -148,7 +148,7 @@ namespace
 			{
 				return;
 			}
-			//L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%llx", req.uin);
+			L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%lld", req.uin);
 			pCon->Send(CMD_RSP_BROADCAST_UIN, req);
 		};
 		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
@@ -272,7 +272,7 @@ InnerSvrCon::InnerSvrCon()
 
 InnerSvrCon::~InnerSvrCon()
 {
-	L_DEBUG("destory svr, m_svr_id=%d", m_svr_id);
+	L_DEBUG("destory svr, m_svr_id=%x", m_svr_id);
 	if (0 != m_svr_id)
 	{
 		if (!RegSvrMgr::Obj().Remove(m_svr_id))
