@@ -213,22 +213,12 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{
-		//L_WARN("client req can't find svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
+		L_WARN("client req can't find verfify svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
 		return;
 	}
 
 	string tcp_pack;
 	L_COND(ASMsg::Serialize(CMD_NTF_FORWARD, f_msg, tcp_pack));
-	//for test
-	//////////////////////////////////////
-	{
-		if (tcp_pack.length() >= lc::MAX_MSG_DATA_LEN)
-		{
-			L_ERROR("MsgForward too big. size=%d, cmd=%x, msg_len=%d", tcp_pack.length(), f_msg.cmd, f_msg.msg_len);
-			return;
-		}
-	}
-	//////////////////////////////////////
 	pSvr->SendPack(tcp_pack.c_str(), tcp_pack.length());
 
 }
