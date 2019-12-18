@@ -23,7 +23,7 @@ void ADClientCon::OnRecv(const lc::MsgPack &msg)
 
 	if (CMD_RSP_REG != as_data.cmd)
 	{
-		L_COND(m_is_reg, "must reg ok before rev other cmd %d", as_data.cmd);//svr处理非CMD_RSP_REG消息,必须已注册。
+		L_COND(m_is_reg, "must reg ok before rev other cmd %d. acc port=%d", as_data.cmd, GetRemotePort());//svr处理非CMD_RSP_REG消息,必须已注册。
 	}
 
 	switch (as_data.cmd)
@@ -53,9 +53,9 @@ void acc::ADClientCon::OnConnected()
 
 	{
 		const MsgAccSeting &req = m_con_mgr.GetHeartbeatInfo();
-		L_DEBUG("OnConnected. send MsgAccSeting info. %d %d %d no_msg_interval_sec=%d",
+		L_DEBUG("OnConnected. send MsgAccSeting info. %d %d %d no_msg_interval_sec=%d, remote port=%d",
 			req.hbi.req_cmd, req.hbi.rsp_cmd, req.hbi.interval_sec, 
-			req.no_msg_interval_sec);
+			req.no_msg_interval_sec, GetRemotePort());
 		string as_msg;
 		L_COND(req.Serialize(as_msg));
 		Send(CMD_REQ_ACC_SETING, as_msg);

@@ -213,7 +213,12 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
 	if (nullptr == pSvr)
 	{
-		L_WARN("client req can't find verfify svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
+		L_WARN("client req can't find svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
+		return;
+	}
+	if (!pSvr->IsReg())
+	{
+		L_WARN("client req find svr, but not reg ok. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
 		return;
 	}
 
