@@ -25,6 +25,7 @@ namespace acc {
 	class ADFacadeMgr;
 	class ConMgr;
 	//svr连接acc服务器，作为客户端
+	应该 有问题，ClientCon断开后不能重用。
 	class ADClientCon : public lc::ClientCon
 	{
 	private:
