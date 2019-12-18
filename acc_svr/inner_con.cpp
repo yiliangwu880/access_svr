@@ -148,7 +148,7 @@ namespace
 			{
 				return;
 			}
-			L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%lld", req.uin);
+			//L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%lld", req.uin);
 			pCon->Send(CMD_RSP_BROADCAST_UIN, req);
 		};
 		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
