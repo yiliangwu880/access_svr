@@ -64,7 +64,7 @@ void acc::ADClientCon::OnConnected()
 
 void acc::ADClientCon::OnDisconnected()
 {
-	L_DEBUG("start try recon timer , sec=%d", RE_CON_INTERVAL_SEC);
+	L_DEBUG("OnDisconnected, start try recon timer , sec=%d", RE_CON_INTERVAL_SEC);
 	m_is_reg = false;
 	auto f = std::bind(&ADClientCon::OnTryReconTimeOut, this);
 	m_recon_tm.StopTimer();
