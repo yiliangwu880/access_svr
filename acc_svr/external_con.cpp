@@ -11,7 +11,10 @@ ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 	, m_uin(0)
 {
-	
+	if (0 != CfgMgr::Obj().GetMsbs())
+	{
+		SetMaxSendBufSize(CfgMgr::Obj().GetMsbs());
+	}
 }
 
 ExternalSvrCon::~ExternalSvrCon()

@@ -2,4 +2,5 @@ inner_ip=127.0.0.1  #内部侦听地址
 inner_port=6531	
 ex_ip=127.0.0.1#外部侦听地址
 ex_port=6532
+max_send_buf_size = 0  #外部连接，最大发送缓存，超了就断开连接. 0表示用系统默认值
 is_daemon = 1 

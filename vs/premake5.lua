@@ -10,7 +10,14 @@ local outdir = action
 
 WorkSpaceInit  "acc_svr"
 
-
+Project "acc"
+	files {
+	"../*.sh",
+	"../*.txt",
+	"../vs/premake5.lua",
+	"../bin/**.txt",
+	"../bin/**.sh",
+	}
 
 Project "acc_svr"
 	IncludeFile { 
@@ -53,15 +60,6 @@ Project "acc_driver"
 	"../acc_driver/*.txt",
 	}
 	
--- Project "samples"
-	-- includedirs { 
-		-- "../include/",
-		-- "base/",
-	-- }
-
-	-- SrcPath { 
-		-- "../samples/**",  
-	-- }
 	
 Project "test_combine"
 	includedirs { 

@@ -61,5 +61,8 @@ bool CfgMgr::Init()
 	is_daemon = (bool)cfg.GetInt("is_daemon");
 	L_DEBUG("is_daemon=%d", is_daemon);
 
+	max_send_buf_size = (bool)cfg.GetInt("max_send_buf_size");
+	L_DEBUG("max_send_buf_size=%d", max_send_buf_size);
+
 	return true;
 }

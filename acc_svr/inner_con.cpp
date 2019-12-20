@@ -268,6 +268,7 @@ InnerSvrCon::InnerSvrCon()
 {
 	m_svr_id = 0;
 	m_is_verify = false;
+	SetMaxSendBufSize(ACC_SVR_MAX_SEND_BUF_SIZE);
 }
 
 InnerSvrCon::~InnerSvrCon()

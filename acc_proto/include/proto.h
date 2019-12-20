@@ -45,6 +45,8 @@ namespace acc {
 
 	const static uint16 ASMSG_MAX_LEN = 1024 * 4; //4k
 	const static uint16 MAX_BROADCAST_CID_NUM = 400; //指定广播 cid最大数量
+	//acc svr之间socket 最大发送缓存，超了断开连接. 10MB
+	static const uint32 ACC_SVR_MAX_SEND_BUF_SIZE = 1024 * 1024 * 10; 
 
 
 	//client和svr层：cmd,msg

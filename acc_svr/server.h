@@ -30,6 +30,7 @@ public:
 	unsigned short GetExPort() const { return m_ex_port; }
 	const char *GetExIp() const { return m_ex_ip.c_str(); }
 	bool IsDaemon()const { return is_daemon; }
+	uint32 GetMsbs() const { return max_send_buf_size; }
 private:
 	unsigned short m_inner_port;
 	std::string m_inner_ip;
@@ -37,4 +38,5 @@ private:
 	unsigned short m_ex_port; 
 	std::string m_ex_ip;
 	bool is_daemon;
+	uint32 max_send_buf_size = 0;
 };

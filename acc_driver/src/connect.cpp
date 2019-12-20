@@ -14,6 +14,7 @@ acc::ADClientCon::ADClientCon(ADFacadeMgr &facade, ConMgr &con_mgr, uint32 acc_i
 	, m_con_mgr(con_mgr)
 {
 
+	SetMaxSendBufSize(ACC_SVR_MAX_SEND_BUF_SIZE);
 }
 
 void ADClientCon::OnRecv(const lc::MsgPack &msg)
