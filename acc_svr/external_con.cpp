@@ -11,9 +11,9 @@ ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 	, m_uin(0)
 {
-	if (0 != CfgMgr::Obj().GetMsbs())
+	if (0 != CfgMgr::Ins().GetMsbs())
 	{
-		SetMaxSendBufSize(CfgMgr::Obj().GetMsbs());
+		SetMaxSendBufSize(CfgMgr::Ins().GetMsbs());
 	}
 }
 
@@ -24,7 +24,7 @@ ExternalSvrCon::~ExternalSvrCon()
 		MsgNtfDiscon ntf;
 		ntf.cid = GetId();
 		L_ASSERT(ntf.cid);
-		const Id2Svr &id_2_svr = RegSvrMgr::Obj().GetRegSvr();
+		const Id2Svr &id_2_svr = RegSvrMgr::Ins().GetRegSvr();
 		for (auto &v: id_2_svr)
 		{
 			InnerSvrCon *p = v.second;
@@ -96,11 +96,11 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 
 void ExternalSvrCon::OnConnected()
 {
-	//L_DEBUG("ExternalSvrCon OnConnected . sec=%d", AccSeting::Obj().m_seting.no_msg_interval_sec);
-	const ClientLimitInfo &cli = AccSeting::Obj().m_seting.cli;
-	if (Server::Obj().GetExConSize() > cli.max_num)
+	//L_DEBUG("ExternalSvrCon OnConnected . sec=%d", AccSeting::Ins().m_seting.no_msg_interval_sec);
+	const ClientLimitInfo &cli = AccSeting::Ins().m_seting.cli;
+	if (Server::Ins().GetExConSize() > cli.max_num)
 	{
-		L_INFO("external con too much. cur size=%d. rsp_cmd=%d", Server::Obj().GetExConSize(), cli.rsp_cmd);
+		L_INFO("external con too much. cur size=%d. rsp_cmd=%d", Server::Ins().GetExConSize(), cli.rsp_cmd);
 		SendMsg(cli.rsp_cmd, cli.rsp_msg.c_str(), cli.rsp_msg.length());
 		//延时断开，等上面消息发送出去。这个方法不可靠，可能发送失败。 以后再想办法。
 		auto f = std::bind(&ExternalSvrCon::DisConnect, this);
@@ -108,11 +108,11 @@ void ExternalSvrCon::OnConnected()
 		return;
 	}
 
-	if (0 != AccSeting::Obj().m_seting.no_msg_interval_sec)
+	if (0 != AccSeting::Ins().m_seting.no_msg_interval_sec)
 	{
-		//L_DEBUG("start no msg timer . sec=%d", AccSeting::Obj().m_seting.no_msg_interval_sec);
+		//L_DEBUG("start no msg timer . sec=%d", AccSeting::Ins().m_seting.no_msg_interval_sec);
 		auto f = std::bind(&ExternalSvrCon::OnWaitFirstMsgTimeOut, this);
-		m_wfm_tm.StartTimer(AccSeting::Obj().m_seting.no_msg_interval_sec * 1000, f);
+		m_wfm_tm.StartTimer(AccSeting::Ins().m_seting.no_msg_interval_sec * 1000, f);
 	}
 }
 
@@ -122,7 +122,8 @@ bool ExternalSvrCon::ClientTcpPack2MsgForward(const lc::MsgPack &msg, MsgForward
 	L_COND_F(msg.len>=sizeof(f_msg.cmd));
 	f_msg.cid = GetId();
 	const char *cur = msg.data;
-	f_msg.cmd = *(decltype(f_msg.cmd)*)(cur);	cur = cur + sizeof(f_msg.cmd);
+	f_msg.cmd = *(decltype(f_msg.cmd)*)(cur);
+	cur = cur + sizeof(f_msg.cmd);
 	f_msg.msg = cur;
 	f_msg.msg_len = msg.len - sizeof(f_msg.cmd);
 	return true;
@@ -146,7 +147,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 		L_COND(ASMsg::Serialize(CMD_NTF_VERIFY_REQ, f_msg, tcp_pack));
 	}
 
-	InnerSvrCon *pSvr = VerifySvrMgr::Obj().GetBLVerifySvr();
+	InnerSvrCon *pSvr = VerifySvrMgr::Ins().GetBLVerifySvr();
 	if (nullptr == pSvr)
 	{
 		L_WARN("can't find verfify svr. maybe you havn't reg your verify svr.");
@@ -183,7 +184,7 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		L_WARN("client illegal msg");
 		return;
 	}
-	const HeartBeatInfo &hbi = AccSeting::Obj().m_seting.hbi;
+	const HeartBeatInfo &hbi = AccSeting::Ins().m_seting.hbi;
 	if (hbi.req_cmd != 0 && hbi.req_cmd == f_msg.cmd)
 	{//reset heartbeat
 		//如果这样做法效率不满意，试下 循环定时器，过期时间里面检查心跳状态是否没更新，没更新就断开。 这样让用户层不用创建销毁定时器。
@@ -212,8 +213,8 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 
-	//L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Obj().cmd=%x %x", f_msg.cmd, AccSeting::Obj().m_seting.hbi.req_cmd, AccSeting::Obj().m_seting.hbi.rsp_cmd);
-	InnerSvrCon *pSvr = RegSvrMgr::Obj().Find(svr_id);
+	//L_DEBUG("f_msg.cmd=%x HeartbeatInfo::Ins().cmd=%x %x", f_msg.cmd, AccSeting::Ins().m_seting.hbi.req_cmd, AccSeting::Ins().m_seting.hbi.rsp_cmd);
+	InnerSvrCon *pSvr = RegSvrMgr::Ins().Find(svr_id);
 	if (nullptr == pSvr)
 	{
 		L_WARN("client req can't find svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);

@@ -101,8 +101,8 @@ namespace
 
 	void FollowMgr::Init()
 	{
-		std::vector<Addr> inner_vec = CfgMgr::Obj().m_inner_vec;
-		//const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+		std::vector<Addr> inner_vec = CfgMgr::Ins().m_inner_vec;
+		//const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 		inner_vec.resize(1);
 		ADFacadeMgr::Init(inner_vec, 1, true);
 	}
@@ -115,7 +115,7 @@ namespace
 		{
 			UNIT_INFO("reg ok, wait add acc reg");
 			{
-				const std::vector<Addr> &inner_vec = CfgMgr::Obj().m_inner_vec;
+				const std::vector<Addr> &inner_vec = CfgMgr::Ins().m_inner_vec;
 				UNIT_ASSERT(inner_vec.size() > 1);
 				UNIT_INFO("add acc2 port = ", inner_vec[1].port);
 				AddAcc(inner_vec[1]);
@@ -123,7 +123,7 @@ namespace
 			m_state = State::WAIT_ADD_ACC_MSG;
 			static auto f = [&]()
 			{
-				const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+				const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 				UNIT_ASSERT(ex_vec.size() > 1);
 				UNIT_INFO("client connect acc2 port=%d", ex_vec[1].port);
 				m_client.ConnectInit(ex_vec[1].ip.c_str(), ex_vec[1].port);
@@ -152,20 +152,19 @@ namespace
 		UNIT_INFO("rev msg from client to acc2, to svr");
 		UNIT_ASSERT(State::WAIT_ADD_ACC_MSG == m_state);
 		m_state = State::END;
-		EventMgr::Obj().StopDispatch();
+		EventMgr::Ins().StopDispatch();
 	}
 
 }
 
 UNITTEST(test_add_acc)
 {
-	UNIT_ASSERT(CfgMgr::Obj().Init());
-	EventMgr::Obj().Init();
+	UNIT_ASSERT(CfgMgr::Ins().Init());
 
 	FollowMgr follow;
 	follow.Init();
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	UNIT_INFO("--------------------test_add_acc end--------------------");
 

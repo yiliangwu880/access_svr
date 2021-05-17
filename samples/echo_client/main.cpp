@@ -69,12 +69,11 @@ void EchoClient::Start()
 
 int main(int argc, char* argv[])
 {
-	EventMgr::Obj().Init();
 
 	EchoClient c;
 	c.Start();
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	return 0;
 }

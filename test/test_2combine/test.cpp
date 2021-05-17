@@ -168,7 +168,7 @@ namespace
 		seting.cli.rsp_msg = "max";
 		m_svr.SetAccSeting(seting);
 
-		std::vector<Addr> inner_vec = CfgMgr::Obj().m_inner_vec;
+		std::vector<Addr> inner_vec = CfgMgr::Ins().m_inner_vec;
 		inner_vec.resize(1);
 		m_svr.Init(inner_vec, 1, true);
 	}
@@ -180,7 +180,7 @@ namespace
 		m_state = FollowMgr::State::WAIT_CLIENT_NO_MSG_TIMEOUT;
 		
 
-		const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+		const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 		UNIT_ASSERT(ex_vec.size() > 1);
 		UNIT_INFO("no msg client connect acc port=%d", ex_vec[0].port);
 		m_nmc.ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port);
@@ -195,7 +195,7 @@ namespace
 		UNIT_ASSERT(FollowMgr::State::WAIT_CLIENT_NO_MSG_TIMEOUT == m_state);
 		m_state = State::WAIT_MAX_CLIENT_REV_MAX_MSG;
 
-		const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+		const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 		UNIT_ASSERT(ex_vec.size() > 1);
 		for (TestMaxNumClient *p : m_max_num_clients)
 		{
@@ -213,7 +213,7 @@ namespace
 	void FollowMgr::End()
 	{
 		m_state = State::END;
-		EventMgr::Obj().StopDispatch();
+		EventMgr::Ins().StopDispatch();
 	}
 
 	void Svr::OnRegResult(uint16 svr_id)
@@ -238,13 +238,12 @@ namespace
 
 UNITTEST(test_2combine)
 {
-	UNIT_ASSERT(CfgMgr::Obj().Init());
-	EventMgr::Obj().Init();
+	UNIT_ASSERT(CfgMgr::Ins().Init());
 
 	FollowMgr follow;
 	follow.Start();
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	UNIT_INFO("--------------------test_2combine end--------------------");
 

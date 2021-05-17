@@ -30,21 +30,20 @@ namespace
 		virtual void End()
 		{
 			UNIT_INFO("--------------------MyFollowTest test end--------------------");
-			EventMgr::Obj().StopDispatch();
+			EventMgr::Ins().StopDispatch();
 		}
 	};
 }
 
 UNITTEST(test_combine)
 {
-	UNIT_ASSERT(CfgMgr::Obj().Init());
-	EventMgr::Obj().Init();
+	UNIT_ASSERT(CfgMgr::Ins().Init());
 
 	MyFollowTest g_base_follow_mgr;
 	bool r = g_base_follow_mgr.Init();
 	UNIT_ASSERT(r);
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	UNIT_INFO("--------------------test_combine end--------------------");
 

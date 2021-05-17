@@ -58,12 +58,11 @@ void EchoServer::OnRevClientMsg(const Session &session, uint32 cmd, const char *
 
 int main(int argc, char* argv[])
 {
-	EventMgr::Obj().Init();
 
 	EchoServer svr;
 	svr.Start();
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	return 0;
 }

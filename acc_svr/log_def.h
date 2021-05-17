@@ -9,12 +9,12 @@
 #include <unordered_map>
 #include "svr_util/include/log_file.h"
 
-#define L_FATAL(x, ...)  su::LogMgr::Obj().Printf(su::LL_FATAL, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define L_ERROR(x, ...)  su::LogMgr::Obj().Printf(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define L_WARN(x, ...)   su::LogMgr::Obj().Printf(su::LL_WARN, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define L_INFO(x, ...)   su::LogMgr::Obj().Printf(su::LL_INFO, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define L_DEBUG(x, ...)  su::LogMgr::Obj().Printf(su::LL_DEBUG, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
-#define L_TRACE(x, ...)  su::LogMgr::Obj().Printf(su::LL_TRACE, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_FATAL(x, ...)  su::LogMgr::Ins().Printf(su::LL_FATAL, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_ERROR(x, ...)  su::LogMgr::Ins().Printf(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_WARN(x, ...)   su::LogMgr::Ins().Printf(su::LL_WARN, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_INFO(x, ...)   su::LogMgr::Ins().Printf(su::LL_INFO, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_DEBUG(x, ...)  su::LogMgr::Ins().Printf(su::LL_DEBUG, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
+#define L_TRACE(x, ...)  su::LogMgr::Ins().Printf(su::LL_TRACE, __FILE__, __LINE__, __FUNCTION__, x, ##__VA_ARGS__);
 
 //简化if语句写法
 
@@ -22,7 +22,7 @@
 #define L_COND_F(cond, ...)\
 	do{\
 	if(!(cond)){\
-	su::LogMgr::Obj().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
+	su::LogMgr::Ins().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
 	return false;\
 	}	\
 	}while(0);
@@ -32,7 +32,7 @@
 	do{\
 	if(!(cond))	\
 	{\
-	su::LogMgr::Obj().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
+	su::LogMgr::Ins().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
 		return; \
 	}\
 	}while(0);
@@ -40,7 +40,7 @@
 #define L_COND_R(cond, ret, ...)\
 	do{\
 	if(!(cond)){\
-	su::LogMgr::Obj().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
+	su::LogMgr::Ins().PrintfCond(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "condition fail \[" #cond "]. ", ##__VA_ARGS__); \
 	return ret;\
 	}	\
 	}while(0);
@@ -68,7 +68,7 @@
 #define L_ASSERT(cond)\
 	do{\
 	if(!(cond)){\
-	su::LogMgr::Obj().Printf(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "assert error"); \
+	su::LogMgr::Ins().Printf(su::LL_ERROR, __FILE__, __LINE__, __FUNCTION__, "assert error"); \
 	}	\
 	}while(0);
 

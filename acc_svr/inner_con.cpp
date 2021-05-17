@@ -19,13 +19,13 @@ namespace
 		L_COND(ret, "parse ctrl msg fail");
 		L_INFO("rev CMD_REQ_ACC_SETING");
 //		L_DEBUG("req no msg sec=%d", req.no_msg_interval_sec);
-		AccSeting::Obj().m_seting = req;
+		AccSeting::Ins().m_seting = req;
 	}
 
 	void Parse_CMD_REQ_DISCON_ALL(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
 		L_INFO("svr req disconnect all client");
-		BaseConMgr &conMgr = Server::Obj().m_client_listener.GetConnMgr();
+		BaseConMgr &conMgr = Server::Ins().m_client_listener.GetConnMgr();
 		//L_DEBUG("con size=%d, wait del size=%d", conMgr.GetAllCon().size(), conMgr.GetWaitDelConSize());
 		auto f=[](SvrCon &svr_con)
 		{
@@ -45,7 +45,7 @@ namespace
 			L_WARN("CMD_REQ_DISCON cid==0");
 			return;
 		}
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
 		L_COND(pClient);
 		pClient->DisConnect();
 	}
@@ -78,7 +78,7 @@ namespace
 		L_COND(req.cid != 0, "CMD_REQ_VERIFY_RET cid==0");
 		const ClientSvrMsg &f_msg = req.rsp_msg;
 
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
 		if (nullptr == pClient)
 		{
 			L_DEBUG("find cid fail. cid=%lld", req.cid);
@@ -113,7 +113,7 @@ namespace
 				pCon->Send(CMD_NTF_CREATE_SESSION, ntf);
 			}
 		};
-		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
+		Server::Ins().m_svr_listener.GetConnMgr().Foreach(f);
 
 	}
 	void Parse_CMD_REQ_BROADCAST_UIN(InnerSvrCon &con, const acc::ASMsg &msg)
@@ -127,7 +127,7 @@ namespace
 			L_WARN("CMD_REQ_BROADCAST_UIN cid==0");
 			return;
 		}
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
 		if (nullptr == pClient)
 		{
 			L_DEBUG("client not exist");
@@ -151,7 +151,7 @@ namespace
 			//L_DEBUG("CMD_RSP_BROADCAST_UIN uin=%lld", req.uin);
 			pCon->Send(CMD_RSP_BROADCAST_UIN, req);
 		};
-		Server::Obj().m_svr_listener.GetConnMgr().Foreach(f);
+		Server::Ins().m_svr_listener.GetConnMgr().Foreach(f);
 	}
 	void Parse_CMD_REQ_SET_MAIN_CMD_2_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
@@ -170,7 +170,7 @@ namespace
 			return;
 		}
 
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid);
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
 		if (nullptr == pClient)
 		{
 			rsp.svr_id = 0;
@@ -212,7 +212,7 @@ namespace
 					pClient->SendPack(tcp_pack.c_str(), tcp_pack.length());
 				}
 			};
-			Server::Obj().m_client_listener.GetConnMgr().Foreach(f);
+			Server::Ins().m_client_listener.GetConnMgr().Foreach(f);
 		}
 		else
 		{
@@ -223,7 +223,7 @@ namespace
 					L_WARN("wrong uin==0");
 					continue;
 				}
-				ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(req.cid_s[i]);
+				ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid_s[i]);
 				if (nullptr == pClient)//客户端刚刚断开，svr还没收到消息，正常。
 				{
 					continue;
@@ -276,17 +276,17 @@ InnerSvrCon::~InnerSvrCon()
 	L_DEBUG("destory svr, m_svr_id=%x", m_svr_id);
 	if (0 != m_svr_id)
 	{
-		if (!RegSvrMgr::Obj().Remove(m_svr_id))
+		if (!RegSvrMgr::Ins().Remove(m_svr_id))
 		{
-			L_ERROR("SvrRegMgr::Obj().Remove fail. m_svr_id=%d", m_svr_id);
+			L_ERROR("SvrRegMgr::Ins().Remove fail. m_svr_id=%d", m_svr_id);
 		}
 		m_svr_id = 0;
 	}
 	if (m_is_verify)
 	{
-		if (!VerifySvrMgr::Obj().RemoveVerify(this))
+		if (!VerifySvrMgr::Ins().RemoveVerify(this))
 		{
-			L_ERROR("SvrRegMgr::Obj().RemoveVerify fail.");
+			L_ERROR("SvrRegMgr::Ins().RemoveVerify fail.");
 		}
 		m_is_verify = false;
 	}
@@ -309,7 +309,7 @@ void InnerSvrCon::RevertSession()
 			this->Send(CMD_NTF_CREATE_SESSION, ntf);
 		}
 	};
-	Server::Obj().m_client_listener.GetConnMgr().Foreach(f);
+	Server::Ins().m_client_listener.GetConnMgr().Foreach(f);
 }
 
 bool InnerSvrCon::RegSvrId(uint16 id)
@@ -320,7 +320,7 @@ bool InnerSvrCon::RegSvrId(uint16 id)
 		L_ERROR("repeated reg svr id. m_svr_id=%d", m_svr_id);
 		return false;
 	}
-	if (!RegSvrMgr::Obj().Insert(id, this))
+	if (!RegSvrMgr::Ins().Insert(id, this))
 	{
 		L_WARN("repeated reg svr id=%d", id);
 		return false;
@@ -334,7 +334,7 @@ bool InnerSvrCon::RegSvrId(uint16 id)
 
 void InnerSvrCon::SetVerifySvr()
 {
-	L_COND(VerifySvrMgr::Obj().InsertVerify(this));
+	L_COND(VerifySvrMgr::Ins().InsertVerify(this));
 	m_is_verify = true;
 }
 
@@ -359,7 +359,7 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 			L_WARN("CMD_REQ_FORWARD 0 == f_msg.cid");
 			return;
 		}
-		ExternalSvrCon *pClient = Server::Obj().FindClientSvrCon(f_msg.cid);
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(f_msg.cid);
 		if (nullptr == pClient)
 		{
 			L_DEBUG("find cid fail. cid=%lld", f_msg.cid);
@@ -374,7 +374,7 @@ void InnerSvrCon::OnRecv(const lc::MsgPack &msg)
 	}
 	else
 	{
-		SvrCtrlMsgDispatch::Obj().DispatchMsg(*this, as_data);
+		SvrCtrlMsgDispatch::Ins().DispatchMsg(*this, as_data);
 	}
 }
 

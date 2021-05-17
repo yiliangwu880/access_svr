@@ -208,8 +208,8 @@ bool TempParse(MsgAccSeting &req, const char *tcp_pack, uint16 tcp_pack_len)
 }
 bool BaseFunTestMgr::Init()
 {
-	const std::vector<Addr> &inner_vec = CfgMgr::Obj().m_inner_vec;
-	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	const std::vector<Addr> &inner_vec = CfgMgr::Ins().m_inner_vec;
+	const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 	UNIT_ASSERT(inner_vec.size() > 1);
 	UNIT_ASSERT(ex_vec.size() > 1);
 	Addr ex_addr = ex_vec[0];
@@ -274,7 +274,7 @@ void BaseFunTestMgr::StartHeartbeatTest()
 	//delay start client
 	static auto f = [&]()
 	{
-		const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+		const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 		UNIT_ASSERT(ex_vec.size() > 1);
 		UNIT_ASSERT(m_h_client.ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
 		UNIT_INFO("delay 1sec, start m_h_client connect");
@@ -504,7 +504,7 @@ void BDSvr::Start()
 	UNIT_INFO("test broadcast, disconnect start");
 
 	//all client connect init
-	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 	UNIT_ASSERT(ex_vec.size() > 1);
 	uint32 idx = 0;
 	for (auto &client : m_mgr.m_bd_client)
@@ -638,7 +638,7 @@ void RouteClient::Start()
 	UNIT_ASSERT(m_state == State::WAIT_VERIFY_OK);
 
 	m_mgr.m_svr1.m_svr_cb = &m_mgr.m_route_svr1;
-	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 	UNIT_ASSERT(ex_vec.size() > 1);
 	UNIT_ASSERT(ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
 }
@@ -838,7 +838,7 @@ void BroadcastUinClient::Start()
 	m_mgr.m_svr3.m_svr_cb = &m_mgr.m_b_svr3;
 
 	//connect to acc1
-	const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+	const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 	UNIT_ASSERT(ex_vec.size() > 2);
 	UNIT_ASSERT(ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port));
 

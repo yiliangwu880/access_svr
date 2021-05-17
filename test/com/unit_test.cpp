@@ -9,7 +9,7 @@ using namespace std;
 IUnitTest::IUnitTest(const char *unit_name) 
 	:m_unit_name(unit_name)
 {
-	UnitTestMgr::Obj().Reg(this);
+	UnitTestMgr::Ins().Reg(this);
 }
 
 void UnitTestMgr::Start(UnitTestPrintf printf)

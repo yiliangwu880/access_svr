@@ -372,7 +372,7 @@ public:
 
 	//step 1  RUN_CORRECT_FOLLOW
 	BaseFlowClient m_client;
-	BaseFlowSvr m_svr; //代表AllADFacadeMgr::Obj()的状态机，会改变为无效。
+	BaseFlowSvr m_svr; //代表AllADFacadeMgr::Ins()的状态机，会改变为无效。
 
 	//step 2 心跳测试
 	HearBeatClient m_h_client;

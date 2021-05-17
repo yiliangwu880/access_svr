@@ -4,12 +4,11 @@
 
 main()
 {
-	EventMgr::Obj().Init();
 
 		调用本库的api
 
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 }
 
 */

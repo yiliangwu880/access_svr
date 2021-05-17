@@ -24,8 +24,8 @@ acc::ADFacadeMgr::~ADFacadeMgr()
 
 bool acc::ADFacadeMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr)
 {
-	event_base *p = EventMgr::Obj().GetEventBase();
-	L_COND_F(p, "must call EventMgr::Obj().Init before this function"); 
+	event_base *p = EventMgr::Ins().GetEventBase();
+	L_COND_F(p, "must call EventMgr::Ins().Init before this function"); 
 	return m_con_mgr.Init(vec_addr, svr_id, is_verify_svr);
 }
 

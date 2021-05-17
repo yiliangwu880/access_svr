@@ -128,7 +128,7 @@ namespace
 
 	void FollowMgr::Init()
 	{
-		std::vector<Addr> inner_vec = CfgMgr::Obj().m_inner_vec;
+		std::vector<Addr> inner_vec = CfgMgr::Ins().m_inner_vec;
 		inner_vec.resize(1);
 		m_svr1.Init(inner_vec, 1, true);
 		m_p_svr2 = new Svr;
@@ -163,7 +163,7 @@ namespace
 		m_p_svr2 = new Svr;
 		m_p_svr2->m_follow = this;
 		m_p_svr2->m_svr_id = 2;
-		std::vector<Addr> inner_vec = CfgMgr::Obj().m_inner_vec;
+		std::vector<Addr> inner_vec = CfgMgr::Ins().m_inner_vec;
 		inner_vec.resize(1);
 		m_p_svr2->Init(inner_vec, 2);
 		UNIT_INFO("re init svr2, m_state =%d this=%p", m_state, this);
@@ -180,7 +180,7 @@ namespace
 			{
 				m_follow->m_state = FollowMgr::State::WAIT_CLIENT_VERIFY;
 
-				const std::vector<Addr> &ex_vec = CfgMgr::Obj().m_ex_vec;
+				const std::vector<Addr> &ex_vec = CfgMgr::Ins().m_ex_vec;
 				UNIT_ASSERT(ex_vec.size() > 1);
 				UNIT_INFO("client connect acc1 port=%d", ex_vec[0].port);
 				m_follow->m_client.ConnectInit(ex_vec[0].ip.c_str(), ex_vec[0].port);
@@ -228,7 +228,7 @@ namespace
 			UNIT_ASSERT(session.id.cid == m_follow->m_sid.cid);
 			UNIT_ASSERT(session.id.cid != 0);
 			m_follow->m_state = FollowMgr::State::END;
-			EventMgr::Obj().StopDispatch();
+			EventMgr::Ins().StopDispatch();
 		}
 
 	}
@@ -237,13 +237,12 @@ namespace
 
 UNITTEST(test_svr_revert)
 {
-	UNIT_ASSERT(CfgMgr::Obj().Init());
-	EventMgr::Obj().Init();
+	UNIT_ASSERT(CfgMgr::Ins().Init());
 
 	FollowMgr follow;
 	follow.Init();
 
-	EventMgr::Obj().Dispatch();
+	EventMgr::Ins().Dispatch();
 
 	UNIT_INFO("--------------------test_add_acc end--------------------");
 
