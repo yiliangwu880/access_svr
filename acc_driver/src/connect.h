@@ -58,7 +58,8 @@ namespace acc {
 		void HandleMsgForward(const ASMsg &msg);
 		void HandleVerifyReq(const ASMsg &msg);
 		void HandleMsgNtfDiscon(const ASMsg &msg);
-		void HandleMsgRspSetMainCmd2Svr(const ASMsg &msg);
+		void HandleMsgRspSetMainCmd2GrpId(const ASMsg &msg);
+		void HandleMsgRspSetActiveSvr(const ASMsg &msg);
 		void HandleMsgBroadcastUin(const ASMsg &msg);
 
 		void OnTryReconTimeOut();

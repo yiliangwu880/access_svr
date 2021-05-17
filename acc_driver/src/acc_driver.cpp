@@ -178,7 +178,7 @@ void acc::ADFacadeMgr::DisconAllClient()
 	}
 }
 
-bool acc::ADFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id)
+bool acc::ADFacadeMgr::SetMainCmd2GrpId(const SessionId &id, uint16 main_cmd, uint16 grpId)
 {
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
@@ -189,18 +189,39 @@ bool acc::ADFacadeMgr::SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint
 		return false;
 	}
 
-	MsgReqSetMainCmd2Svr req;
+	MsgReqSetMainCmd2GrpId req;
 	req.cid = id.cid;
 	req.main_cmd = main_cmd;
-	req.svr_id = svr_id;
+	req.grpId = grpId;
 	return con->Send(CMD_REQ_SET_MAIN_CMD_2_SVR, req);
 }
 
-void acc::ADFacadeMgr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
+bool acc::ADFacadeMgr::SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId)
+{
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	if (nullptr == con->FindSession(id))
+	{
+		L_INFO("can't find session");
+		return false;
+	}
+
+	MsgReqSetActiveSvrId req;
+	req.cid = id.cid;
+	req.grpId = grpId;
+	req.svrId = svrId;
+	return con->Send(CMD_REQ_SET_ACTIVE_SVR, req);
+}
+
+void acc::ADFacadeMgr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
 }
+void acc::ADFacadeMgr::OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id)
+{
 
+}
 void acc::ADFacadeMgr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	L_WARN("OnRevVerifyReq no implement");

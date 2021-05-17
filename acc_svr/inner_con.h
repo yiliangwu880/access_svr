@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include "log_def.h"
 #include "libevent_cpp/include/include_all.h"
 #include "svr_util/include/su_include.h"
@@ -18,7 +19,7 @@ public:
 	void DispatchMsg(InnerSvrCon &con, const acc::ASMsg &msg);
 
 private:
-	std::map<acc::Cmd, HandleMsg> m_cmd_2_handle;
+	std::unordered_map<acc::Cmd, HandleMsg> m_cmd_2_handle;
 };
 
 using Id2Svr = std::map<uint16, InnerSvrCon*>;

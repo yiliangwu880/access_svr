@@ -33,6 +33,7 @@ namespace acc {
 		bool operator<(const Addr &other) const;
 	};
 
+	//用来标识接入acc的client，单cid不够严谨的，cid有时候会重复分配相同的。
 	struct SessionId
 	{
 		SessionId();
@@ -93,8 +94,10 @@ namespace acc {
 		//请求acc踢掉all client
 		void DisconAllClient();
 
-		//请求设置 main_cmd映射svr_id
-		bool SetMainCmd2Svr(const SessionId &id, uint16 main_cmd, uint16 svr_id);
+		//请求设置 main_cmd映射 grpId
+		bool SetMainCmd2GrpId(const SessionId &id, uint16 main_cmd, uint16 grpId);
+		//请求设置 svr_grp_id 中 激活的 svr_id
+		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
 
 	public:
 		//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
@@ -108,8 +111,11 @@ namespace acc {
 		//@id 请求参数一样
 		//@main_cmd 请求参数一样
 		//@svr_id 0 表示失败。
-		//参考 SetMainCmd2Svr
-		virtual void OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
+		//参考 SetMainCmd2GrpId
+		virtual void OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
+
+
+		virtual void OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id);
 
 
 		//接收client消息包到svr

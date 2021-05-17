@@ -56,7 +56,9 @@
 			svr 认证client,然后触发所有svr创建session. 等svr认证超时,断开。
 			svr 请求设置session的uin,并广播给所有svr.
 			svr 请求主动断开 所有session。
-			svr 请求设置 main_cmd映射svr_id。
+			svr 请求设置 main_cmd 映射 grpId。	(例如多个zone 属于一个组)
+			svr 请求设置 grpId 中 激活的 svr_id。(每个会话独立设置)(例如多个zone 属于相同的grpId)
+			
 		}
 		svr 连接注册。
 		最大连接client数,svr可以请求修改。
@@ -134,7 +136,8 @@
 				Wait_Verify, //已收到第一条消息，转发给svr, 等验证结果。
 				Verify, //验证通过
 			}
-			map<uint16, uint16> MainCmd2SvrId; //有时候需要多个svr处理相同cmd,就需要cmd动态映射svr_id. 比如MMORPG,多个场景进程。
+			map<uint16, uint16> MainCmd2GrpId; 
+			vector<uint16> grpId2SvrId; //grp id 当前激活的 svrId
 		}
 		
 		struct SvrConnecter
@@ -181,8 +184,10 @@
 	{
 		缺点：侵入业务逻辑，限制用户。
 		优点: 用户实现简单。
-		
-		某个svr会话初始化uin,通过acc中心广播给其他svr. 再通过acc中心通知client uin。就能保证client第一条请求uin相关消息,是所有svr会话 uin设定成功后收到。
+		流程：
+			某个svr会话初始化uin,通过acc中心广播给其他svr. 
+			再通过acc中心通知client uin。
+			就能保证client第一条请求uin相关消息时,所有svr会话 uin已经设定。
 	}
 	如果acc不处理uin, 就需要svr 群之间转发uin。加上acc，就构成网状结构。问题复杂。  比如：
 	{
@@ -192,7 +197,7 @@
 		登录成功后，有不知道先后顺序的网络处理事件：svr 群之间转发uin， client请求uin的第一条协议。 
 		设计不好导致有可能 svr收到uin的请求，这时候svr的会话还没设定uin.
 	}
-	当然uin不是强制要用，特殊情况可以忽略uin
+	当然uin不是强制要用，特殊情况可以忽略uin. 对于一个账号多个角色的情况适用。
 }
 
 测试用例：

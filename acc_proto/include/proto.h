@@ -109,9 +109,12 @@ namespace acc {
 
 		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
 											
-		CMD_REQ_SET_MAIN_CMD_2_SVR,		//MsgReqSetMainCmd2Svr 请求设置 main_cmd映射svr_id.
+		CMD_REQ_SET_MAIN_CMD_2_SVR,		//MsgReqSetMainCmd2GrpId 请求设置 main_cmd映射svr_id.
 										// (为了确保client明确知道发送消息到那个svr_id,映射设置需要client发起请求，设置成功通知客户端)
-		CMD_RSP_SET_MAIN_CMD_2_SVR,		//MsgRspSetMainCmd2Svr
+		CMD_RSP_SET_MAIN_CMD_2_SVR,		//MsgRspSetMainCmd2GrpId
+
+		CMD_REQ_SET_ACTIVE_SVR,			//MsgReqSetActiveSvrId 
+		CMD_RSP_SET_ACTIVE_SVR,			//MsgRspSetActiveSvrId
 
 		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
 		CMD_REQ_DISCON_ALL,				//请求acc断开所有client， 
@@ -243,18 +246,31 @@ namespace acc {
 	};
 
 
-	struct MsgReqSetMainCmd2Svr
+	struct MsgReqSetMainCmd2GrpId
 	{
 		uint64 cid;
 		uint16 main_cmd;
-		uint16 svr_id;
+		uint16 grpId;
+	};	
+
+	struct MsgRspSetMainCmd2GrpId
+	{
+		uint64 cid;
+		uint16 main_cmd;
+		uint16 grpId;	//0 表示失败
 	};
 
-	struct MsgRspSetMainCmd2Svr
+	struct MsgReqSetActiveSvrId
 	{
 		uint64 cid;
-		uint16 main_cmd;
-		uint16 svr_id;	//0 表示失败
+		uint16 svrId;
+		uint16 grpId;
+	};
+	struct MsgRspSetActiveSvrId
+	{
+		uint64 cid;
+		uint16 svrId;
+		uint16 grpId;	//0 表示失败
 	};
 
 	struct MsgReqDiscon

@@ -34,7 +34,8 @@ void ADClientCon::OnRecv(const lc::MsgPack &msg)
 	case CMD_NTF_VERIFY_REQ			:HandleVerifyReq(as_data)           ; return;
 	case CMD_NTF_FORWARD			:HandleMsgForward(as_data)          ; return;
 	case CMD_NTF_DISCON				:HandleMsgNtfDiscon(as_data)        ; return;
-	case CMD_RSP_SET_MAIN_CMD_2_SVR	:HandleMsgRspSetMainCmd2Svr(as_data); return;
+	case CMD_RSP_SET_MAIN_CMD_2_SVR:HandleMsgRspSetMainCmd2GrpId(as_data); return;
+	case CMD_RSP_SET_ACTIVE_SVR:HandleMsgRspSetActiveSvr(as_data); return;
 	case CMD_RSP_BROADCAST_UIN		:HandleMsgBroadcastUin(as_data); return;
 	default:
 		L_ERROR("unknow cmd. %d", as_data.cmd);
@@ -198,9 +199,9 @@ void acc::ADClientCon::HandleMsgNtfDiscon(const ASMsg &msg)
 	m_id_2_s.erase(it);
 }
 
-void acc::ADClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
+void acc::ADClientCon::HandleMsgRspSetMainCmd2GrpId(const ASMsg &msg)
 {
-	MsgRspSetMainCmd2Svr rsp;
+	MsgRspSetMainCmd2GrpId rsp;
 	bool ret = CtrlMsgProto::Parse(msg, rsp);
 	L_COND(ret, "parse ctrl msg fail");
 	L_COND(rsp.cid);
@@ -214,9 +215,27 @@ void acc::ADClientCon::HandleMsgRspSetMainCmd2Svr(const ASMsg &msg)
 		return;
 	}
 
-	m_facade.OnSetMainCmd2SvrRsp(it->second, rsp.main_cmd, rsp.svr_id);
+	m_facade.OnSetMainCmd2GrpIdRsp(it->second, rsp.main_cmd, rsp.grpId);
 }
 
+void acc::ADClientCon::HandleMsgRspSetActiveSvr(const ASMsg &msg)
+{
+	MsgRspSetActiveSvrId rsp;
+	bool ret = CtrlMsgProto::Parse(msg, rsp);
+	L_COND(ret, "parse ctrl msg fail");
+	L_COND(rsp.cid);
+	SessionId id;
+	id.cid = rsp.cid;
+	id.acc_id = m_acc_id;
+	auto it = m_id_2_s.find(id.cid);
+	if (it == m_id_2_s.end())
+	{
+		L_ERROR("can't find session. %lld %d", id.cid, id.acc_id);
+		return;
+	}
+
+	m_facade.OnSetActiveSvr(it->second, rsp.grpId, rsp.svrId);
+}
 void acc::ADClientCon::HandleMsgBroadcastUin(const ASMsg &msg)
 {
 //	L_DEBUG("HandleMsgBroadcastUin");

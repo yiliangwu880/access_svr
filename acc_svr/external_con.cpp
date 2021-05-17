@@ -67,11 +67,23 @@ bool ExternalSvrCon::SendMsg(uint32 cmd, const char *msg, uint16 msg_len)
 	return SendPack(s.c_str(), s.length());
 }
 
-void ExternalSvrCon::SetMainCmd2SvrId(uint16 main_cmd, uint16 svr_id)
+void ExternalSvrCon::SetMainCmd2GrpId(uint16 main_cmd, uint16 grpId)
 {
 	L_COND(0 != main_cmd);
+	L_COND(0 != grpId);
+	m_cmd2GrpId[main_cmd] = grpId;
+}
+
+void ExternalSvrCon::SetActiveSvrId(uint16 grpId, uint16 svr_id)
+{
+	L_COND(0 != grpId);
 	L_COND(0 != svr_id);
-	m_cmd_2_svrid[main_cmd] = svr_id;
+	L_COND(grpId < 100); // 组ID用来当数组下标，设计不能过大
+	if (m_grpId2SvrId.size() < (size_t)grpId+1)
+	{
+		m_grpId2SvrId.resize(grpId + 1);
+	}
+	m_grpId2SvrId[grpId] = svr_id;
 }
 
 void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
@@ -200,10 +212,12 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	uint16 main_cmd = f_msg.cmd >> 16;
 	uint16 svr_id = main_cmd;
 	{//get svr_id
-		auto it = m_cmd_2_svrid.find(main_cmd);
-		if (it != m_cmd_2_svrid.end())
+		auto it = m_cmd2GrpId.find(main_cmd);
+		if (it != m_cmd2GrpId.end())
 		{
-			svr_id = it->second;
+			uint16 grpId = it->second;
+			L_COND(grpId < m_grpId2SvrId.size());
+			svr_id = m_grpId2SvrId[grpId];
 		}
 	}
 	if (0 == svr_id)

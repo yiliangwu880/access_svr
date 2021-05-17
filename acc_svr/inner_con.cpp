@@ -153,19 +153,20 @@ namespace
 		};
 		Server::Ins().m_svr_listener.GetConnMgr().Foreach(f);
 	}
+
 	void Parse_CMD_REQ_SET_MAIN_CMD_2_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
-		MsgReqSetMainCmd2Svr req;
+		MsgReqSetMainCmd2GrpId req;
 		bool ret = CtrlMsgProto::Parse(msg, req);
 		L_COND(ret, "parse ctrl msg fail");
-		MsgRspSetMainCmd2Svr rsp;
+		MsgRspSetMainCmd2GrpId rsp;
 		rsp.cid = req.cid;
 		rsp.main_cmd = req.main_cmd;
-		rsp.svr_id = req.svr_id;
+		rsp.grpId = req.grpId;
 		if (req.cid == 0)
 		{
 			L_WARN("CMD_REQ_VERIFY_RET cid==0");
-			rsp.svr_id = 0;
+			rsp.grpId = 0;
 			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
 			return;
 		}
@@ -173,7 +174,7 @@ namespace
 		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
 		if (nullptr == pClient)
 		{
-			rsp.svr_id = 0;
+			rsp.grpId = 0;
 			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
 			L_DEBUG("client not exist");
 			return;
@@ -184,8 +185,45 @@ namespace
 			return;
 		}
 
-		pClient->SetMainCmd2SvrId(req.main_cmd, req.svr_id);
+		pClient->SetMainCmd2GrpId(req.main_cmd, req.grpId);
 		con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
+	}
+
+	void Parse_CMD_REQ_SET_ACTIVE_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
+	{
+		MsgReqSetActiveSvrId req;
+		bool ret = CtrlMsgProto::Parse(msg, req);
+		L_COND(ret, "parse ctrl msg fail");
+		MsgRspSetActiveSvrId rsp;
+		rsp.cid = req.cid;
+		rsp.grpId = req.grpId;
+		rsp.svrId = req.svrId;
+		if (req.cid == 0)
+		{
+			L_WARN("CMD_REQ_VERIFY_RET cid==0");
+			rsp.grpId = 0;
+			rsp.svrId = 0;
+			con.Send(CMD_RSP_SET_ACTIVE_SVR, rsp);
+			return;
+		}
+
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
+		if (nullptr == pClient)
+		{
+			rsp.grpId = 0;
+			rsp.svrId = 0;
+			con.Send(CMD_RSP_SET_ACTIVE_SVR, rsp);
+			L_DEBUG("client not exist");
+			return;
+		}
+		if (!pClient->IsVerify())
+		{
+			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
+			return;
+		}
+
+		pClient->SetActiveSvrId(req.grpId, req.svrId);
+		con.Send(CMD_RSP_SET_ACTIVE_SVR, rsp);
 	}
 
 	void Parse_CMD_REQ_BROADCAST(InnerSvrCon &con, const acc::ASMsg &msg)
@@ -246,6 +284,7 @@ void SvrCtrlMsgDispatch::Init()
 	m_cmd_2_handle[CMD_REQ_VERIFY_RET]         = Parse_CMD_REQ_VERIFY_RET;
 	m_cmd_2_handle[CMD_REQ_BROADCAST]          = Parse_CMD_REQ_BROADCAST;
 	m_cmd_2_handle[CMD_REQ_SET_MAIN_CMD_2_SVR] = Parse_CMD_REQ_SET_MAIN_CMD_2_SVR;
+	m_cmd_2_handle[CMD_REQ_SET_ACTIVE_SVR]	   = Parse_CMD_REQ_SET_ACTIVE_SVR;
 	m_cmd_2_handle[CMD_REQ_DISCON]             = Parse_CMD_REQ_DISCON;
 	m_cmd_2_handle[CMD_REQ_DISCON_ALL]         = Parse_CMD_REQ_DISCON_ALL;
 	m_cmd_2_handle[CMD_REQ_ACC_SETING]		   = Parse_CMD_REQ_ACC_SETING;

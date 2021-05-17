@@ -137,7 +137,7 @@ void BaseFlowSvr::OnClientConnect(const Session &session)
 	UNIT_ASSERT(State::WAIT_CLIENT_MSG == m_state);
 }
 
-void BaseFlowSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
+void BaseFlowSvr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 grpId)
 {
 
 }
@@ -443,7 +443,7 @@ void HearBeatSvr::OnClientConnect(const Session &session)
 	UNIT_ASSERT(session.remote_ip == "127.0.0.1");
 }
 
-void HearBeatSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
+void HearBeatSvr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 grpId)
 {
 
 }
@@ -620,7 +620,7 @@ void BDSvr::OnClientConnect(const Session &session)
 	}
 }
 
-void BDSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
+void BDSvr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 grpId)
 {
 
 }
@@ -724,7 +724,7 @@ void RouteSvr::ChangeRoute()
 {
 	UNIT_INFO("cid=%llx", m_sid.cid);
 	UNIT_ASSERT(m_sid.cid != 0);
-	m_mgr.m_svr2.SetMainCmd2Svr(m_sid, BF_SVR3, BF_SVR2);
+	m_mgr.m_svr2.SetMainCmd2GrpId(m_sid, BF_SVR3, BF_SVR2);
 }
 
 void RouteSvr::OnRegResult(uint16 svr_id)
@@ -759,9 +759,9 @@ void RouteSvr::OnClientConnect(const Session &session)
 
 }
 
-void RouteSvr::OnSetMainCmd2SvrRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
+void RouteSvr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 grpId)
 {
-	UNIT_INFO("OnSetMainCmd2SvrRsp %d %d", main_cmd, svr_id);
+	UNIT_INFO("OnSetMainCmd2GrpIdRsp %d %d", main_cmd, grpId);
 }
 
 
