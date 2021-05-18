@@ -724,7 +724,7 @@ void RouteSvr::ChangeRoute()
 {
 	UNIT_INFO("cid=%llx", m_sid.cid);
 	UNIT_ASSERT(m_sid.cid != 0);
-	m_mgr.m_svr2.SetMainCmd2GrpId(m_sid, BF_SVR3, BF_SVR2);
+	//m_mgr.m_svr2.SetMainCmd2GrpId(m_sid, BF_SVR3, BF_SVR2);
 }
 
 void RouteSvr::OnRegResult(uint16 svr_id)

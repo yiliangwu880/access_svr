@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <memory>
 #include "libevent_cpp/include/include_all.h"
 #include "svr_util/include/singleton.h"
 #include "svr_util/include/easy_code.h"
@@ -58,7 +59,6 @@ namespace acc {
 		void HandleMsgForward(const ASMsg &msg);
 		void HandleVerifyReq(const ASMsg &msg);
 		void HandleMsgNtfDiscon(const ASMsg &msg);
-		void HandleMsgRspSetMainCmd2GrpId(const ASMsg &msg);
 		void HandleMsgRspSetActiveSvr(const ASMsg &msg);
 		void HandleMsgBroadcastUin(const ASMsg &msg);
 		void HandleMsgRspCacheMsg(const ASMsg &msg);
@@ -76,12 +76,11 @@ namespace acc {
 		bool m_is_fatal;      //严重错误状态，断开，不再连接，不再修复，等重启。
 		bool m_is_reg; 
 		bool m_is_verify_svr;
-		MsgAccSeting m_seting; //如果有信息，ADClientCon连接成功会发送设置心跳信息到acc
-
+		std::unique_ptr<MsgAccSeting> m_seting; //如果有信息，ADClientCon连接成功会发送设置心跳信息到acc
 	public:
 		ConMgr(ADFacadeMgr &facade);
 		~ConMgr();
-		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
+		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr);
 		bool AddAcc(const Addr &addr, bool is_verify_svr = false);
 		const std::vector<ADClientCon *> &GetAllCon() const { return m_vec_con; };
 		//致命错误，设置整个svr无效
@@ -93,8 +92,7 @@ namespace acc {
 		const Session *FindSession(const SessionId &id) const;
 		void SetRegResult(bool is_success);
 		void SetAccSeting(const MsgAccSeting &seting);
-		const MsgAccSeting &GetHeartbeatInfo() const { return m_seting; }
-
+		const MsgAccSeting *GetMsgAccSeting() const { return m_seting.get(); }
 	private:
 		void FreeAllCon();
 	};

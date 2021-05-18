@@ -25,6 +25,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -109,10 +110,7 @@ namespace acc {
 
 		CMD_REQ_BROADCAST,              //MsgReqBroadCast 请求全局广播，或者指定cid列表广播.
 											
-		CMD_REQ_SET_MAIN_CMD_2_SVR,		//MsgReqSetMainCmd2GrpId 请求设置 main_cmd映射svr_id.
-										// (为了确保client明确知道发送消息到那个svr_id,映射设置需要client发起请求，设置成功通知客户端)
-		CMD_RSP_SET_MAIN_CMD_2_SVR,		//MsgRspSetMainCmd2GrpId
-
+		CMD_REQ_SET_CMD_2_GRP,			//MsgReqSetCmd2GrpId
 		CMD_REQ_SET_ACTIVE_SVR,			//MsgReqSetActiveSvrId 
 		CMD_RSP_SET_ACTIVE_SVR,			//MsgRspSetActiveSvrId
 
@@ -202,6 +200,7 @@ namespace acc {
 		HeartBeatInfo hbi;			//client 和 acc 心跳相关
 		ClientLimitInfo cli;		//client 相关设置
 		uint32 no_msg_interval_sec;        //client连接成功，不发消息的超时时间。
+		uint16 defaultGrpId=0;		//cmd 缺省映射 grpId
  
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
 		//@para[out] std::string &tcp_pack
@@ -219,6 +218,17 @@ namespace acc {
 		//@para[out] std::string &tcp_pack
 		bool Serialize(std::string &tcp_pack) const;
 	};
+
+	struct MsgReqSetCmd2GrpId
+	{
+		uint16 grpId = 0;
+		std::vector<uint16> vecCmd;
+		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
+		//@para[out] std::string &tcp_pack
+		bool Serialize(std::string &tcp_pack) const;
+	};
+
+
 
 	struct MsgReqReg
 	{
@@ -248,20 +258,6 @@ namespace acc {
 		sockaddr_in addr;
 	};
 
-
-	struct MsgReqSetMainCmd2GrpId
-	{
-		uint64 cid;
-		uint16 main_cmd;
-		uint16 grpId;
-	};	
-
-	struct MsgRspSetMainCmd2GrpId
-	{
-		uint64 cid;
-		uint16 main_cmd;
-		uint16 grpId;	//0 表示失败
-	};
 
 	struct MsgReqSetActiveSvrId
 	{

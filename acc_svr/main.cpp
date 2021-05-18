@@ -49,6 +49,7 @@ namespace {
 			L_ERROR("server init fail");
 			return false;
 		}
+		g_AccSeting = &AccSeting::Ins();
 		return true;
 	}
 }

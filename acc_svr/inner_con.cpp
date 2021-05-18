@@ -154,41 +154,21 @@ namespace
 		Server::Ins().m_svr_listener.GetConnMgr().Foreach(f);
 	}
 
-	void Parse_CMD_REQ_SET_MAIN_CMD_2_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
+
+	void Parse_CMD_REQ_SET_CMD_2_GRP(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
-		MsgReqSetMainCmd2GrpId req;
-		bool ret = CtrlMsgProto::Parse(msg, req);
-		L_COND(ret, "parse ctrl msg fail");
-		MsgRspSetMainCmd2GrpId rsp;
-		rsp.cid = req.cid;
-		rsp.main_cmd = req.main_cmd;
-		rsp.grpId = req.grpId;
-		if (req.cid == 0)
+		MsgReqSetCmd2GrpId req;
+		L_COND(req.Parse(msg.msg, msg.msg_len), "parse ctrl msg fail");
+		if (req.grpId == 0)
 		{
-			L_WARN("CMD_REQ_VERIFY_RET cid==0");
-			rsp.grpId = 0;
-			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
+			L_ERROR("MsgReqSetCmd2GrpId::grpId==0");
 			return;
 		}
-
-		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
-		if (nullptr == pClient)
+		for (auto &v : req.vecCmd)
 		{
-			rsp.grpId = 0;
-			con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
-			L_DEBUG("client not exist");
-			return;
+			g_AccSeting->m_cmd2GrpId[v] = req.grpId;
 		}
-		if (!pClient->IsVerify())
-		{
-			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
-			return;
-		}
-
-		pClient->SetMainCmd2GrpId(req.main_cmd, req.grpId);
-		con.Send(CMD_RSP_SET_MAIN_CMD_2_SVR, rsp);
 	}
-
 	void Parse_CMD_REQ_SET_ACTIVE_SVR(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
 		MsgReqSetActiveSvrId req;
@@ -218,7 +198,7 @@ namespace
 		}
 		if (!pClient->IsVerify())
 		{
-			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
+			L_WARN("client is not verify ,can't handle Parse_CMD_REQ_SET_ACTIVE_SVR");
 			return;
 		}
 
@@ -248,7 +228,7 @@ namespace
 		}
 		if (!pClient->IsVerify())
 		{
-			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
+			L_WARN("client is not verify ,can't handle Parse_CMD_REQ_CACHE_MSG");
 			return;
 		}
 
@@ -312,7 +292,7 @@ void SvrCtrlMsgDispatch::Init()
 	m_cmd_2_handle[CMD_REQ_REG]                = Parse_CMD_REQ_REG;
 	m_cmd_2_handle[CMD_REQ_VERIFY_RET]         = Parse_CMD_REQ_VERIFY_RET;
 	m_cmd_2_handle[CMD_REQ_BROADCAST]          = Parse_CMD_REQ_BROADCAST;
-	m_cmd_2_handle[CMD_REQ_SET_MAIN_CMD_2_SVR] = Parse_CMD_REQ_SET_MAIN_CMD_2_SVR;
+	m_cmd_2_handle[CMD_REQ_SET_CMD_2_GRP] = Parse_CMD_REQ_SET_CMD_2_GRP;
 	m_cmd_2_handle[CMD_REQ_SET_ACTIVE_SVR]	   = Parse_CMD_REQ_SET_ACTIVE_SVR;
 	m_cmd_2_handle[CMD_REQ_DISCON]             = Parse_CMD_REQ_DISCON;
 	m_cmd_2_handle[CMD_REQ_DISCON_ALL]         = Parse_CMD_REQ_DISCON_ALL;

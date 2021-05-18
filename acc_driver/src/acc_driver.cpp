@@ -178,22 +178,23 @@ void acc::ADFacadeMgr::DisconAllClient()
 	}
 }
 
-bool acc::ADFacadeMgr::SetMainCmd2GrpId(const SessionId &id, uint16 main_cmd, uint16 grpId)
-{
-	ADClientCon *con = m_con_mgr.FindADClientCon(id);
-	L_COND_F(con);
-	L_COND_F(con->IsReg());
-	if (nullptr == con->FindSession(id))
-	{
-		L_INFO("can't find session");
-		return false;
-	}
 
-	MsgReqSetMainCmd2GrpId req;
-	req.cid = id.cid;
-	req.main_cmd = main_cmd;
-	req.grpId = grpId;
-	return con->Send(CMD_REQ_SET_MAIN_CMD_2_SVR, req);
+void acc::ADFacadeMgr::SetMainCmd2GrpId(uint16 grpId, const std::vector<uint16> &vecCmd)
+{
+	//const std::vector<ADClientCon *> &vec = m_con_mgr.GetAllCon();
+	for (ADClientCon *p : m_con_mgr.GetAllCon())
+	{
+		L_COND(p);
+		if (!p->IsReg())
+		{
+			L_ERROR("SetMainCmd2GrpId find UnReg acc connect");
+			continue;
+		}
+		MsgReqSetCmd2GrpId req;
+		req.grpId = grpId;
+		req.vecCmd = vecCmd;
+		p->Send(CMD_REQ_SET_CMD_2_GRP, req);
+	}
 }
 
 bool acc::ADFacadeMgr::SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId)
@@ -231,10 +232,7 @@ bool acc::ADFacadeMgr::SetCache(const SessionId &id, uint16 isCache)
 	return con->Send(CMD_REQ_CACHE_MSG, req);
 }
 
-void acc::ADFacadeMgr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
-{
 
-}
 void acc::ADFacadeMgr::OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id)
 {
 

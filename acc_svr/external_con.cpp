@@ -6,7 +6,7 @@
 using namespace std;
 using namespace acc;
 using namespace lc;
-
+AccSeting *g_AccSeting = nullptr;
 ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 	, m_uin(0)
@@ -67,12 +67,6 @@ bool ExternalSvrCon::SendMsg(uint32 cmd, const char *msg, uint16 msg_len)
 	return SendPack(s.c_str(), s.length());
 }
 
-void ExternalSvrCon::SetMainCmd2GrpId(uint16 main_cmd, uint16 grpId)
-{
-	L_COND(0 != main_cmd);
-	L_COND(0 != grpId);
-	m_cmd2GrpId[main_cmd] = grpId;
-}
 
 void ExternalSvrCon::SetActiveSvrId(uint16 grpId, uint16 svr_id)
 {
@@ -231,20 +225,30 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 	//真正处理转发
-	uint16 main_cmd = f_msg.cmd >> 16;
-	uint16 svr_id = main_cmd;
+	uint16 cmd = (uint16_t)f_msg.cmd;
+	uint16 svr_id = 0;
 	{//get svr_id
-		auto it = m_cmd2GrpId.find(main_cmd);
-		if (it != m_cmd2GrpId.end())
+		auto it = g_AccSeting->m_cmd2GrpId.find(cmd);
+		if (it == g_AccSeting->m_cmd2GrpId.end())
+		{
+			svr_id = g_AccSeting->m_seting.defaultGrpId;
+		}
+		else
 		{
 			uint16 grpId = it->second;
-			L_COND(grpId < m_grpId2SvrId.size());
-			svr_id = m_grpId2SvrId[grpId];
+			if (m_grpId2SvrId.size() >= (size_t)grpId + 1)
+			{
+				svr_id = m_grpId2SvrId[grpId];
+			}
+			if (0 == svr_id)
+			{
+				svr_id = grpId;
+			}
 		}
 	}
 	if (0 == svr_id)
 	{
-		L_WARN("invaild cmd %x. hight uint16 must can't be 0", f_msg.cmd);
+		L_ERROR("invaild cmd %x. hight uint16 must can't be 0", f_msg.cmd);
 		DisConnect();
 		return;
 	}
@@ -253,12 +257,12 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 	InnerSvrCon *pSvr = RegSvrMgr::Ins().Find(svr_id);
 	if (nullptr == pSvr)
 	{
-		L_WARN("client req can't find svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
+		L_WARN("client req can't find svr. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, cmd);
 		return;
 	}
 	if (!pSvr->IsReg())
 	{
-		L_WARN("client req find svr, but not reg ok. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, main_cmd);
+		L_WARN("client req find svr, but not reg ok. cmd=%x svr_id=%d main_cmd=%d", f_msg.cmd, svr_id, cmd);
 		return;
 	}
 

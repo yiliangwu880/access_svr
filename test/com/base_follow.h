@@ -396,6 +396,7 @@ public:
 
 	State m_state;
 	lc::Timer m_tm;
+	//代表3个 svr
 	AllADFacadeMgr m_svr1;
 	AllADFacadeMgr m_svr2;
 	AllADFacadeMgr m_svr3;

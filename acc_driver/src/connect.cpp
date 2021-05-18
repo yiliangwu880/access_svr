@@ -1,3 +1,4 @@
+#include <memory>
 #include "acc_driver.h"
 #include "connect.h"
 #include "log_def.h"
@@ -34,7 +35,6 @@ void ADClientCon::OnRecv(const lc::MsgPack &msg)
 	case CMD_NTF_VERIFY_REQ			:HandleVerifyReq(as_data)           ; return;
 	case CMD_NTF_FORWARD			:HandleMsgForward(as_data)          ; return;
 	case CMD_NTF_DISCON				:HandleMsgNtfDiscon(as_data)        ; return;
-	case CMD_RSP_SET_MAIN_CMD_2_SVR:HandleMsgRspSetMainCmd2GrpId(as_data); return;
 	case CMD_RSP_SET_ACTIVE_SVR:HandleMsgRspSetActiveSvr(as_data); return;
 	case CMD_RSP_CACHE_MSG:HandleMsgRspCacheMsg(as_data); return;
 	case CMD_RSP_BROADCAST_UIN		:HandleMsgBroadcastUin(as_data); return;
@@ -54,13 +54,13 @@ void acc::ADClientCon::OnConnected()
 		Send(CMD_REQ_REG, req);
 	}
 
+	if (const MsgAccSeting *req = m_con_mgr.GetMsgAccSeting())
 	{
-		const MsgAccSeting &req = m_con_mgr.GetHeartbeatInfo();
 		L_DEBUG("OnConnected. send MsgAccSeting info. %d %d %d no_msg_interval_sec=%d, remote port=%d",
-			req.hbi.req_cmd, req.hbi.rsp_cmd, req.hbi.interval_sec, 
-			req.no_msg_interval_sec, GetRemotePort());
+			req->hbi.req_cmd, req->hbi.rsp_cmd, req->hbi.interval_sec,
+			req->no_msg_interval_sec, GetRemotePort());
 		string as_msg;
-		L_COND(req.Serialize(as_msg));
+		L_COND(req->Serialize(as_msg));
 		Send(CMD_REQ_ACC_SETING, as_msg);
 	}
 }
@@ -200,24 +200,7 @@ void acc::ADClientCon::HandleMsgNtfDiscon(const ASMsg &msg)
 	m_id_2_s.erase(it);
 }
 
-void acc::ADClientCon::HandleMsgRspSetMainCmd2GrpId(const ASMsg &msg)
-{
-	MsgRspSetMainCmd2GrpId rsp;
-	bool ret = CtrlMsgProto::Parse(msg, rsp);
-	L_COND(ret, "parse ctrl msg fail");
-	L_COND(rsp.cid);
-	SessionId id;
-	id.cid = rsp.cid;
-	id.acc_id = m_acc_id;
-	auto it = m_id_2_s.find(id.cid);
-	if (it == m_id_2_s.end())
-	{
-		L_ERROR("can't find session. %lld %d", id.cid, id.acc_id);
-		return;
-	}
 
-	m_facade.OnSetMainCmd2GrpIdRsp(it->second, rsp.main_cmd, rsp.grpId);
-}
 
 void acc::ADClientCon::HandleMsgRspSetActiveSvr(const ASMsg &msg)
 {
@@ -339,7 +322,6 @@ bool acc::ConMgr::Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is
 			}
 		}
 	}
-
 	m_svr_id = svr_id;
 	m_is_verify_svr = is_verify_svr;
 	for (auto &v : vec_addr)
@@ -429,7 +411,8 @@ void acc::ConMgr::SetRegResult(bool is_success)
 
 void acc::ConMgr::SetAccSeting(const MsgAccSeting &seting)
 {
-	m_seting = seting;
+	m_seting = std::make_unique<MsgAccSeting>();
+	*m_seting = seting;
 	for (ADClientCon *p : m_vec_con)
 	{
 		if (!p->IsConnect())
@@ -438,7 +421,7 @@ void acc::ConMgr::SetAccSeting(const MsgAccSeting &seting)
 		}
 		//L_DEBUG("send heartbeat info to port =%d", p->GetRemotePort());
 		string as_msg;
-		L_COND(m_seting.Serialize(as_msg));
+		L_COND(m_seting->Serialize(as_msg));
 		p->Send(CMD_REQ_ACC_SETING, as_msg);
 	}
 }

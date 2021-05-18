@@ -67,6 +67,7 @@ namespace acc {
 		//当已经注册了，自动马上发送给acc。
 		void SetAccSeting(const MsgAccSeting &seting);
 
+		//@isDefSvr true表示 cmd 缺省发到该 svr。 grpId == svr_id
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 
 		//运行期，新增acc
@@ -93,9 +94,9 @@ namespace acc {
 
 		//请求acc踢掉all client
 		void DisconAllClient();
-
-		//请求设置 main_cmd映射 grpId
-		bool SetMainCmd2GrpId(const SessionId &id, uint16 main_cmd, uint16 grpId);
+	
+		//请求设置  cmd映射 grpId, 默认映射 参考 SetAccSeting
+		void SetMainCmd2GrpId(uint16 grpId, const std::vector<uint16> &vecCmd);
 		//请求设置 svr_grp_id 中 激活的 svr_id
 		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
 		bool SetCache(const SessionId &id, uint16 isCache);
@@ -107,13 +108,6 @@ namespace acc {
 
 		//接收client请求认证的包. 也就是第一个包
 		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
-
-		//设置会话自定义映射main_cmd to svr_id
-		//@id 请求参数一样
-		//@main_cmd 请求参数一样
-		//@svr_id 0 表示失败。
-		//参考 SetMainCmd2GrpId
-		virtual void OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 svr_id);
 
 
 		virtual void OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id);

@@ -10,14 +10,43 @@ namespace
 		dst = (decltype(dst))(*src); // 类似 dst = (uint32 &)(*src)
 		src = src + sizeof(dst);
 	}
+	template<class T>
+	void ParseVector(T &vec, const char *&cur)
+	{
+		size_t len;
+		ParseCp(len, cur);
+		vec.reserve(len);
+		for (size_t i = 0; i < len; i++)
+		{
+			typename T::value_type v;
+			ParseCp(v, cur);
+			vec.push_back(v);
+		}
+	}
 
 	//简化打包操作。赋值并移动指针
+	//不建议用这个， 推荐用 SerialStrCp，
 	template<class T>
 	void SerializeCp(const T &src, char *&dst)
 	{
 		memcpy(dst, (const char *)&src, sizeof(src));
 		dst += sizeof(src);
-	}  
+	}  	
+	template<class T>
+		void SerialStrCp(std::string &tcp_pack, const T &v)
+	{
+		tcp_pack.append((const char *)&v, sizeof(v));
+	}
+
+	template<class T>
+	void SerialStrCpVector(std::string &tcp_pack, const T &vec)
+	{
+		SerialStrCp(tcp_pack, vec.size());
+		for (auto &v : vec)
+		{
+			SerialStrCp(tcp_pack, v);
+		}
+	}
 }
 
 bool acc::ASMsg::Parse(const char *tcp_pack, uint16 tcp_pack_len)
@@ -262,6 +291,7 @@ bool acc::MsgAccSeting::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 	cli.rsp_msg.assign(cur, max_client_msg_len);
 	cur += max_client_msg_len;
 	ParseCp(no_msg_interval_sec, cur);
+	ParseCp(defaultGrpId, cur);
 	return true;
 }
 
@@ -280,6 +310,7 @@ bool acc::MsgAccSeting::Serialize(std::string &tcp_pack) const
 	tcp_pack.append(cli.rsp_msg);
 
 	tcp_pack.append((const char *)&no_msg_interval_sec, sizeof(no_msg_interval_sec));
+	tcp_pack.append((const char *)&defaultGrpId, sizeof(defaultGrpId));
 	return true;
 }
 
@@ -328,5 +359,29 @@ bool acc::ClientSvrMsg::Serialize(std::string &tcp_pack) const
 	tcp_pack.append((const char *)&cmd, sizeof(cmd));
 	tcp_pack.append((const char *)&msg_len, sizeof(msg_len));
 	tcp_pack.append(msg, msg_len);
+	return true;
+}
+
+bool acc::MsgReqSetCmd2GrpId::Parse(const char *tcp_pack, uint16 tcp_pack_len)
+{
+	if (0 == tcp_pack_len || nullptr == tcp_pack)
+	{
+		return false;
+	}
+
+	const char *cur = tcp_pack; //读取指针
+	ParseCp(grpId, cur);
+	ParseVector(vecCmd, cur);
+	if (tcp_pack_len != (cur - tcp_pack))
+	{
+		return false;
+	}
+	return true;
+}
+
+bool acc::MsgReqSetCmd2GrpId::Serialize(std::string &tcp_pack) const
+{
+	SerialStrCp(tcp_pack, grpId);
+	SerialStrCpVector(tcp_pack, vecCmd);
 	return true;
 }
