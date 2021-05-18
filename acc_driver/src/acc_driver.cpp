@@ -214,6 +214,23 @@ bool acc::ADFacadeMgr::SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 
 	return con->Send(CMD_REQ_SET_ACTIVE_SVR, req);
 }
 
+bool acc::ADFacadeMgr::SetCache(const SessionId &id, uint16 isCache)
+{
+	ADClientCon *con = m_con_mgr.FindADClientCon(id);
+	L_COND_F(con);
+	L_COND_F(con->IsReg());
+	if (nullptr == con->FindSession(id))
+	{
+		L_INFO("can't find session");
+		return false;
+	}
+
+	MsgReqCacheMsg req;
+	req.cid = id.cid;
+	req.isCache = isCache;
+	return con->Send(CMD_REQ_CACHE_MSG, req);
+}
+
 void acc::ADFacadeMgr::OnSetMainCmd2GrpIdRsp(const Session &session, uint16 main_cmd, uint16 svr_id)
 {
 
@@ -222,6 +239,12 @@ void acc::ADFacadeMgr::OnSetActiveSvr(const Session &session, uint16 grpId, uint
 {
 
 }
+
+void acc::ADFacadeMgr::OnMsgRspCacheMsg(const Session &session, bool isCache)
+{
+
+}
+
 void acc::ADFacadeMgr::OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len)
 {
 	L_WARN("OnRevVerifyReq no implement");

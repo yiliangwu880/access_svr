@@ -61,6 +61,7 @@ namespace acc {
 		void HandleMsgRspSetMainCmd2GrpId(const ASMsg &msg);
 		void HandleMsgRspSetActiveSvr(const ASMsg &msg);
 		void HandleMsgBroadcastUin(const ASMsg &msg);
+		void HandleMsgRspCacheMsg(const ASMsg &msg);
 
 		void OnTryReconTimeOut();
 	};

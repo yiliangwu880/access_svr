@@ -1,10 +1,11 @@
 #pragma once
+#include <unordered_map>
+#include <queue>
 #include "log_def.h"
 #include "libevent_cpp/include/include_all.h"
 #include "svr_util/include/su_include.h"
 #include "svr_util/include/time/su_timer.h"
 #include "../acc_proto/include/proto.h"
-#include <unordered_map>
 
 class ExternalSvrCon;
 
@@ -41,7 +42,8 @@ private:
 	lc::Timer m_heartbeat_tm;	    //心跳超时定时器
 	lc::Timer m_cls_tm;			    // client limite size. 最大client数量，断开定时器
 	uint64 m_uin;                   //玩家标识
-
+	bool m_isCache = false;			//true 表示缓存消息，暂停转发。
+	std::vector<std::string> m_cacheMsg;
 public:
 	ExternalSvrCon();
 	~ExternalSvrCon();
@@ -51,6 +53,7 @@ public:
 	bool SendMsg(uint32 cmd, const char *msg, uint16 msg_len);
 	void SetMainCmd2GrpId(uint16 main_cmd, uint16 svr_id);
 	void SetActiveSvrId(uint16 grpId, uint16 svr_id);
+	void SetCache(bool isCache);
 	uint64 GetUin()const { return m_uin; }
 	void SetUin(uint64 uin) { m_uin = uin; }
 private:

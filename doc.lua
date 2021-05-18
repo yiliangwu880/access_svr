@@ -58,6 +58,7 @@
 			svr 请求主动断开 所有session。
 			svr 请求设置 main_cmd 映射 grpId。	(例如多个zone 属于一个组)
 			svr 请求设置 grpId 中 激活的 svr_id。(每个会话独立设置)(例如多个zone 属于相同的grpId)
+			svr 请求缓存开关。 （支持切换zone的过程中，acc消息暂停转发）
 			
 		}
 		svr 连接注册。

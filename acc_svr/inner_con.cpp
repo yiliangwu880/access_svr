@@ -226,6 +226,35 @@ namespace
 		con.Send(CMD_RSP_SET_ACTIVE_SVR, rsp);
 	}
 
+	void Parse_CMD_REQ_CACHE_MSG(InnerSvrCon &con, const acc::ASMsg &msg)
+	{
+		MsgReqCacheMsg req;
+		bool ret = CtrlMsgProto::Parse(msg, req);
+		L_COND(ret, "parse ctrl msg fail");
+		MsgRspCacheMsg rsp;
+		rsp.cid = req.cid;
+		rsp.isCache = req.isCache;
+		if (req.cid == 0)
+		{
+			L_WARN("CMD_REQ_VERIFY_RET cid==0");
+			return;
+		}
+
+		ExternalSvrCon *pClient = Server::Ins().FindClientSvrCon(req.cid);
+		if (nullptr == pClient)
+		{
+			L_WARN("client not exist");
+			return;
+		}
+		if (!pClient->IsVerify())
+		{
+			L_WARN("client is not verify ,can't handle CMD_RSP_SET_MAIN_CMD_2_SVR");
+			return;
+		}
+
+		con.Send(CMD_RSP_CACHE_MSG, rsp);
+		pClient->SetCache(req.isCache);
+	}
 	void Parse_CMD_REQ_BROADCAST(InnerSvrCon &con, const acc::ASMsg &msg)
 	{
 		MsgReqBroadCast req;
@@ -288,7 +317,8 @@ void SvrCtrlMsgDispatch::Init()
 	m_cmd_2_handle[CMD_REQ_DISCON]             = Parse_CMD_REQ_DISCON;
 	m_cmd_2_handle[CMD_REQ_DISCON_ALL]         = Parse_CMD_REQ_DISCON_ALL;
 	m_cmd_2_handle[CMD_REQ_ACC_SETING]		   = Parse_CMD_REQ_ACC_SETING;
-	m_cmd_2_handle[CMD_REQ_BROADCAST_UIN]	   = Parse_CMD_REQ_BROADCAST_UIN;
+	m_cmd_2_handle[CMD_REQ_BROADCAST_UIN] = Parse_CMD_REQ_BROADCAST_UIN;
+	m_cmd_2_handle[CMD_REQ_CACHE_MSG]	= Parse_CMD_REQ_CACHE_MSG;
 }
 
 void SvrCtrlMsgDispatch::DispatchMsg(InnerSvrCon &con, const acc::ASMsg &msg)

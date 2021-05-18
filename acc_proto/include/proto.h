@@ -116,6 +116,9 @@ namespace acc {
 		CMD_REQ_SET_ACTIVE_SVR,			//MsgReqSetActiveSvrId 
 		CMD_RSP_SET_ACTIVE_SVR,			//MsgRspSetActiveSvrId
 
+		CMD_REQ_CACHE_MSG,				//MsgReqCacheMsg 
+		CMD_RSP_CACHE_MSG,				//MsgRspCacheMsg
+
 		CMD_REQ_DISCON,					//MsgReqDiscon 请求acc断开client
 		CMD_REQ_DISCON_ALL,				//请求acc断开所有client， 
 
@@ -271,6 +274,18 @@ namespace acc {
 		uint64 cid;
 		uint16 svrId;
 		uint16 grpId;	//0 表示失败
+	};
+
+
+	struct MsgReqCacheMsg
+	{
+		uint64 cid;
+		bool isCache;
+	};
+	struct MsgRspCacheMsg
+	{
+		uint64 cid;
+		bool isCache;
 	};
 
 	struct MsgReqDiscon

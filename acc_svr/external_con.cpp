@@ -86,6 +86,23 @@ void ExternalSvrCon::SetActiveSvrId(uint16 grpId, uint16 svr_id)
 	m_grpId2SvrId[grpId] = svr_id;
 }
 
+
+void ExternalSvrCon::SetCache(bool isCache)
+{
+	if (!isCache)//恢复
+	{
+		for (std::string &str : m_cacheMsg)
+		{
+			lc::MsgPack msg; //待优化，减少copy
+			msg.len = str.length();
+			memcpy(msg.data, str.c_str(), str.length());
+			Forward2Svr(msg);
+		}
+		m_cacheMsg.clear();
+	}
+	m_isCache = isCache;
+}
+
 void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 {
 	switch (m_state)
@@ -100,6 +117,11 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 		L_WARN("client repeated req verify, ignore");
 		break;
 	case ExternalSvrCon::State::VERIFYED:
+		if (m_isCache)
+		{
+			L_DEBUG("cache msg");
+			m_cacheMsg.emplace_back(msg.data, msg.len);
+		}
 		Forward2Svr(msg);
 		break;
 	}
