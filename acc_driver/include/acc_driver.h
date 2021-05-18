@@ -5,12 +5,15 @@
 main()
 {
 
-		调用本库的api
-
-
+	调用本库的api
 	EventMgr::Ins().Dispatch();
 }
-
+使用例子：
+	一般需要先启动所有 acc. 
+	所有 svr 调用init
+	都注册成功后，再调用下面2函数初始化 acc信息
+	SetAccSeting
+	SetMainCmd2GrpId
 */
 
 #pragma once
@@ -61,14 +64,16 @@ namespace acc {
 		ADFacadeMgr();
 		~ADFacadeMgr();
 
+		//@isDefSvr true表示 cmd 缺省发到该 svr。 grpId == svr_id
+		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
+
 		//acc设置，具体内容参考 MsgAccSeting
 		//设置acc最大 client数量.
 		//当未注册时，会请求注册后，自动发送给acc。
 		//当已经注册了，自动马上发送给acc。
 		void SetAccSeting(const MsgAccSeting &seting);
-
-		//@isDefSvr true表示 cmd 缺省发到该 svr。 grpId == svr_id
-		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
+		//请求设置  cmd映射 grpId, 默认映射 参考 SetAccSeting
+		void SetMainCmd2GrpId(uint16 grpId, const std::vector<uint16> &vecCmd);
 
 		//运行期，新增acc
 		bool AddAcc(const Addr &addr); 
@@ -95,8 +100,6 @@ namespace acc {
 		//请求acc踢掉all client
 		void DisconAllClient();
 	
-		//请求设置  cmd映射 grpId, 默认映射 参考 SetAccSeting
-		void SetMainCmd2GrpId(uint16 grpId, const std::vector<uint16> &vecCmd);
 		//请求设置 svr_grp_id 中 激活的 svr_id
 		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
 		bool SetCache(const SessionId &id, uint16 isCache);
