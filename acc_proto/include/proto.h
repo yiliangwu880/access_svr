@@ -32,12 +32,12 @@
 #include <arpa/inet.h>
 
 #ifndef uint32
-using uint16 =unsigned short ;
-using uint32 = unsigned int ;
-using uint64 = unsigned long long ;
-using int64 = long long ;
-using uint8 = unsigned char ;
-using int32 = int ;
+using uint16 = uint16_t;
+using uint32 = uint32_t;
+using uint64 = uint64_t;
+using int64 = int64_t;
+using uint8 = unsigned char;
+using int32 = int;
 #endif
 
 #pragma pack(push)

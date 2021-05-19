@@ -225,6 +225,9 @@ void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
 		return;
 	}
 	//真正处理转发
+	//s1:cmd 找 组id,找不到转发到缺省组. end
+	//s2:组id 找 svrId,找不到转发到svrId==组id
+	//end
 	uint16 cmd = (uint16_t)f_msg.cmd;
 	uint16 svr_id = 0;
 	{//get svr_id

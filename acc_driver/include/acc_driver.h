@@ -64,7 +64,7 @@ namespace acc {
 		ADFacadeMgr();
 		~ADFacadeMgr();
 
-		//@isDefSvr true表示 cmd 缺省发到该 svr。 grpId == svr_id
+		//@svr_id 默认组ID == svr_id. 需要设置组ID隐射多个svrId ,参考 SetActiveSvrId
 		bool Init(const std::vector<Addr> &vec_addr, uint16 svr_id, bool is_verify_svr = false);
 
 		//acc设置，具体内容参考 MsgAccSeting
@@ -110,22 +110,22 @@ namespace acc {
 		virtual void OnRegResult(uint16 svr_id) = 0;
 
 		//接收client请求认证的包. 也就是第一个包
-		virtual void OnRevVerifyReq(const SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
+		virtual void OnRevVerifyReq(const acc::SessionId &id, uint32 cmd, const char *msg, uint16 msg_len);
 
 
-		virtual void OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id);
+		virtual void OnSetActiveSvr(const acc::Session &session, uint16 grpId, uint16 svr_id);
 
 
-		virtual void OnMsgRspCacheMsg(const Session &session, bool isCache);
+		virtual void OnMsgRspCacheMsg(const acc::Session &session, bool isCache);
 
 		//接收client消息包到svr
-		virtual void OnRevClientMsg(const Session &session, uint32 cmd, const char *msg, uint16 msg_len);
+		virtual void OnRevClientMsg(const acc::Session &session, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//client断线通知
-		virtual void OnClientDisCon(const Session &session);
+		virtual void OnClientDisCon(const acc::Session &session);
 
 		//client认证成功，创建会话。 概念类似 新socket连接客户端
-		virtual void OnClientConnect(const Session &session);
+		virtual void OnClientConnect(const acc::Session &session);
 
 		//acc 断线通知
 		virtual void OnAccDisCon(const std::string &acc_ip, uint16 acc_port);
