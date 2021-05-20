@@ -36,9 +36,9 @@ private:
 	static const uint64 VERIFY_TIME_OUT_SEC = 10;
 	enum class State
 	{
-		INIT,                   //刚连接进来，没验证,等第一条消息。
-		WAIT_VERIFY,            //已收到第一条消息，转发给svr, 等验证结果。
-		VERIFYED,               //验证已经通过
+		INIT,        //没验证状态，刚连接进来，或者验证失败后，接收消息会转发验证svr。
+		WAIT_VERIFY, //已收到第一条消息，转发给svr, 等验证结果。成功->VERIFYED,失败->INIT
+		VERIFYED,    //验证已经通过
 	};
 
 	State m_state;
