@@ -167,7 +167,7 @@
 		}
 		struct Session{
 			SessionId id;
-			uint64 uin; //登录后玩家id, svr必不可少的
+			uint64 uin; //登录后玩家id, 待验证，应该可以不要
 			addr;
 		}
 		struct AccCon{
@@ -181,6 +181,8 @@
 
 为什么acc需要玩家登录uin呢： 
 {
+	待思考：应该可以不用。 world 登录成功，广播给其他svr,再最后通知client登录成功就好了
+
 	对svr来说，uin就是会话的信息之一。
 	acc做服务中心，星型结构，简单:
 	{

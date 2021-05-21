@@ -49,7 +49,7 @@ namespace acc {
 		SessionId id;
 		std::string remote_ip;
 		uint16 remote_port;
-		uint64 uin; //登录后玩家id
+		uint64 uin; //登录后玩家id， 待思考验证，应该可以不用。
 	};
 
 	class ConMgr;

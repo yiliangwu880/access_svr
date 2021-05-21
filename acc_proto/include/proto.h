@@ -66,7 +66,7 @@ namespace acc {
 	//当消息号为 CMD_NTF_FORWARD CMD_REQ_FORWARD时，消息体为MsgForward
 	struct MsgForward
 	{
-		uint64 cid;      //其中cid为 client到acc的连接id
+		uint64 cid;      //其中cid为 client到acc的连接id. 当个acc内唯一
 		uint32 cmd;      //client和svr层：cmd,msg
 		uint16 msg_len;  //msg字节数。网络包不包含这个内容
 		const char *msg; //client和svr层：cmd,msg. 注意：你内存指针，别弄野了
