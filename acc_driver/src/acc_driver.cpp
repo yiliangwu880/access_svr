@@ -267,3 +267,12 @@ void acc::ADFacadeMgr::OnAccDisCon(const std::string &ip, uint16 port)
 {
 	L_INFO("acc disconnect. ip=%s, port=%d", ip.c_str(), port);
 }
+
+void acc::Session::Clear()
+{
+	id.acc_id = 0;
+	id.cid = 0;
+	remote_ip.clear();
+	remote_port = 0;
+	uin = 0;
+}

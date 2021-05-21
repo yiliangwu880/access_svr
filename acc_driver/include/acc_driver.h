@@ -32,7 +32,7 @@ namespace acc {
 	struct Addr
 	{
 		std::string ip;
-		uint16 port;
+		uint16 port=0;
 		bool operator<(const Addr &other) const;
 	};
 
@@ -40,8 +40,8 @@ namespace acc {
 	struct SessionId
 	{
 		SessionId();
-		uint64 cid;		//acc的connect id
-		uint32 acc_id; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
+		uint64 cid=0;		//acc的connect id
+		uint32 acc_id=0; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
 		bool operator<(const SessionId &a) const;
 	};	
 	struct Session {
@@ -49,7 +49,8 @@ namespace acc {
 		SessionId id;
 		std::string remote_ip;
 		uint16 remote_port;
-		uint64 uin; //登录后玩家id， 待思考验证，应该可以不用。
+		uint64 uin=0; //登录后玩家id， 待思考验证，应该可以不用。
+		void Clear();
 	};
 
 	class ConMgr;
