@@ -101,7 +101,14 @@ namespace
 		//通知创建会话
 		MsgNtfCreateSession ntf;
 		ntf.cid = req.cid;
-		ntf.uin = 0;
+		ntf.uin = req.uin;
+		ntf.accName = req.accName;
+		if (req.accName.length() >= ArrayLen(ntf.accName))
+		{
+			L_ERROR("accName is too long。 %s", req.accName.c_str());
+			return;
+		}
+		memcpy(ntf.accName, req.accName.c_str(), req.accName.length());
 		ntf.addr = pClient->GetRemoteAddr();
 		//L_DEBUG("verify create session. port=%x %x", ntohs(pClient->GetRemoteAddr().sin_port), pClient->GetRemotePort());
 		auto f = [&ntf](SvrCon &con)

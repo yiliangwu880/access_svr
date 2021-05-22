@@ -10,6 +10,14 @@ namespace
 		dst = (decltype(dst))(*src); // 类似 dst = (uint32 &)(*src)
 		src = src + sizeof(dst);
 	}
+	template<>
+	void ParseCp<std::string>(std::string &dst, const char *&src)
+	{
+		size_t len;
+		ParseCp(len, src);
+		dst.append(src, len);
+		src = src + len;
+	}
 	template<class T>
 	void ParseVector(T &vec, const char *&cur)
 	{
@@ -33,9 +41,16 @@ namespace
 		dst += sizeof(src);
 	}  	
 	template<class T>
-		void SerialStrCp(std::string &tcp_pack, const T &v)
+	void SerialStrCp(std::string &tcp_pack, const T &v)
 	{
 		tcp_pack.append((const char *)&v, sizeof(v));
+	}
+	template<>
+	void SerialStrCp<std::string>(std::string &tcp_pack, const std::string &v)
+	{
+		size_t len = v.length();
+		SerialStrCp(tcp_pack, len);
+		tcp_pack.append(v);
 	}
 
 	template<class T>
@@ -239,6 +254,8 @@ bool acc::MsgReqVerifyRet::Parse(const char *tcp_pack, uint16 tcp_pack_len)
 
 	ParseCp(cid, cur);
 	ParseCp(is_success, cur);
+	ParseCp(uin, cur);
+	ParseCp(accName, cur);
 	rsp_msg.Parse(cur, tcp_pack_len - sizeof(cid) - sizeof(is_success));
 	return  true;
 }
@@ -250,8 +267,10 @@ bool acc::MsgReqVerifyRet::Serialize(std::string &tcp_pack) const
 		return false;
 	}
 
-	tcp_pack.append((const char *)&cid, sizeof(cid));
-	tcp_pack.append((const char *)&is_success, sizeof(is_success));
+	SerialStrCp(tcp_pack, cid);
+	SerialStrCp(tcp_pack, is_success);
+	SerialStrCp(tcp_pack, uin);
+	SerialStrCp(tcp_pack, accName);
 	return rsp_msg.Serialize(tcp_pack);
 }
 

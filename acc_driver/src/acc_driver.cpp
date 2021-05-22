@@ -41,7 +41,7 @@ void acc::ADFacadeMgr::SetAccSeting(const MsgAccSeting &seting)
 	m_con_mgr.SetAccSeting(seting);
 }
 
-bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len)
+bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, const VerifyRetStruct &d)
 {
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
@@ -50,11 +50,13 @@ bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32
 
 	MsgReqVerifyRet req;
 	req.cid = id.cid;
-	req.is_success = is_success;
+	req.is_success = d.is_success;
+	req.uin = d.uin;
+	req.accName = d.accName;
 	
-	req.rsp_msg.cmd = cmd;
-	req.rsp_msg.msg = msg;
-	req.rsp_msg.msg_len = msg_len;
+	req.rsp_msg.cmd = d.cmd;
+	req.rsp_msg.msg = d.msg;
+	req.rsp_msg.msg_len = d.msg_len;
 
 	string as_msg;
 	req.Serialize(as_msg);
@@ -84,7 +86,7 @@ bool acc::ADFacadeMgr::SendToClient(const SessionId &id, uint32 cmd, const char 
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
 	L_COND_F(con->IsReg());
-	L_COND_F(nullptr != con->FindSession(id), "can't find session");
+	L_COND_F(nullptr != con->FindSession(id), "can't find session");//todo 待优化，不用查。acc检查失败，通知删掉session
 
 	MsgForward req;
 	req.cid = id.cid;

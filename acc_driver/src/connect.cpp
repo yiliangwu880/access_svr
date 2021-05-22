@@ -135,6 +135,7 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 	Session s;
 	s.id.cid = rsp.cid;
 	s.uin = rsp.uin;
+	s.accName = rsp.accName;
 	s.id.acc_id = m_acc_id;
 	s.remote_ip = inet_ntoa(rsp.addr.sin_addr);
 	s.remote_port = ntohs(rsp.addr.sin_port);

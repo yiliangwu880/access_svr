@@ -47,7 +47,8 @@ namespace acc {
 	const static uint16 ASMSG_MAX_LEN = 1024 * 4; //4k
 	const static uint16 MAX_BROADCAST_CID_NUM = 400; //指定广播 cid最大数量
 	//acc svr之间socket 最大发送缓存，超了断开连接. 10MB
-	static const uint32 ACC_SVR_MAX_SEND_BUF_SIZE = 1024 * 1024 * 10; 
+	static const uint32 ACC_SVR_MAX_SEND_BUF_SIZE = 1024 * 1024 * 10;
+	const static uint16 MAX_NAME_LEN = 20; //
 
 
 	//client和svr层：cmd,msg
@@ -81,6 +82,8 @@ namespace acc {
 	{
 		uint64 cid;
 		bool is_success; //true表示验证成功
+		uint64 uin;
+		std::string accName; 
 		ClientSvrMsg rsp_msg;// 验证结果给客户端。 
 		bool Parse(const char *tcp_pack, uint16 tcp_pack_len);
 		//@para[out] std::string &tcp_pack
@@ -255,6 +258,7 @@ namespace acc {
 	{
 		uint64 cid;
 		uint64 uin;
+		char accName[MAX_NAME_LEN+1];
 		sockaddr_in addr;
 	};
 

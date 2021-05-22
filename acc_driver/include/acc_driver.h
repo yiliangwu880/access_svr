@@ -44,17 +44,33 @@ namespace acc {
 		uint32 acc_id=0; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
 		bool operator<(const SessionId &a) const;
 	};	
+	//session额外自定义信息的抽象.  base session extend
+	struct BaseSnEx
+	{
+		virtual ~BaseSnEx() {};
+	};
 	struct Session {
 		Session();
 		SessionId id;
 		std::string remote_ip;
 		uint16 remote_port;
-		uint64 uin=0; //登录后玩家id， 待思考验证，应该可以不用。
+		uint64 uin=0; //登录后玩家id， 
+		std::string accName;
+		unique_ptr<BaseSnEx> ex;
 		void Clear();
 	};
 
 	class ConMgr;
 
+	struct VerifyRetStruct
+	{
+		bool is_success = false;
+		uint64 uin = 0;
+		string accName;
+		uint32 cmd = 0;
+		const char *msg;
+		uint16 msg_len = 0;
+	};
 	//外观模式，acc driver 接口
 	class ADFacadeMgr 
 	{
@@ -80,7 +96,7 @@ namespace acc {
 		bool AddAcc(const Addr &addr); 
 
 		//请求验证结果. 
-		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);
+		bool ReqVerifyRet(const SessionId &id, const VerifyRetStruct &d);
 
 		//广播uin 一个svr向所有svr的指定会话
 		bool BroadcastUinToSession(const SessionId &id, uint64 uin);
