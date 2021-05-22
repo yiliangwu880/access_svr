@@ -132,19 +132,20 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 	L_COND(ret, "parse ctrl msg fail");
 	L_COND(rsp.cid);
 
-	Session s;
+	auto pair = m_id_2_s.insert(make_pair(rsp.cid, Session()));
+	bool r = pair.second;
+	if (!r)
+	{
+		L_ERROR("create session fail, repeated insert id. cid=%lld acc_id=%d", s.id.cid, s.id.acc_id);
+		return;
+	}
+	Session &s = (pair.first->second);
 	s.id.cid = rsp.cid;
 	s.uin = rsp.uin;
 	s.accName = rsp.accName;
 	s.id.acc_id = m_acc_id;
 	s.remote_ip = inet_ntoa(rsp.addr.sin_addr);
 	s.remote_port = ntohs(rsp.addr.sin_port);
-	bool r = m_id_2_s.insert(make_pair(s.id.cid, s)).second;
-	if (!r)
-	{
-		L_ERROR("create session fail, repeated insert id. cid=%lld acc_id=%d", s.id.cid, s.id.acc_id);
-		return;
-	}
 	m_facade.OnClientConnect(s);
 	return;
 }
@@ -256,10 +257,10 @@ void acc::ADClientCon::HandleMsgBroadcastUin(const ASMsg &msg)
 		L_WARN("can't find session. %lld %d", id.cid, id.acc_id);
 		return;
 	}
-
-	it->second.uin = rsp.uin;
+	Session &sn = it->second;
+	sn.uin = rsp.uin;
 	//L_DEBUG("cb OnRevBroadcastUinToSession ");
-	m_facade.OnRevBroadcastUinToSession(rsp.uin);
+	m_facade.OnRevBroadcastUinToSession(sn);
 }
 
 void acc::ADClientCon::OnTryReconTimeOut()

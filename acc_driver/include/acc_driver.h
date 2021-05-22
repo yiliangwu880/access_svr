@@ -56,7 +56,7 @@ namespace acc {
 		uint16 remote_port;
 		uint64 uin=0; //登录后玩家id， 
 		std::string accName;
-		unique_ptr<BaseSnEx> ex;
+		mutable unique_ptr<BaseSnEx> baseEx;
 		void Clear();
 	};
 
@@ -120,7 +120,27 @@ namespace acc {
 		//请求设置 svr_grp_id 中 激活的 svr_id
 		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
 		bool SetCache(const SessionId &id, uint16 isCache);
-
+		const Session *FindSession(const SessionId &id);
+		template<class SnEx>
+		SnEx *FindSessionEx(const SessionId &sid)
+		{
+			const Session *sn = FindSession(sid);
+			L_COND_V(sn);
+			if (!sn->baseEx)
+			{
+				sn->baseEx = make_unique<SnEx>();
+			}
+			return dynamic_cast<SnEx *>(sn->baseEx.get());
+		}
+		template<class SnEx>
+		SnEx *GetSessionEx(const Session &sn)
+		{
+			if (!sn.baseEx)
+			{
+				sn.baseEx = make_unique<SnEx>();
+			}
+			return dynamic_cast<SnEx *>(sn.baseEx.get());
+		}
 	public:
 		//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
 		//@svr_id = 0表示失败
@@ -148,7 +168,7 @@ namespace acc {
 		virtual void OnAccDisCon(const std::string &acc_ip, uint16 acc_port);
 
 		//当设置uin
-		virtual void OnRevBroadcastUinToSession(uint64 uin) {};
+		virtual void OnRevBroadcastUinToSession(const acc::Session &session) {};
 
 	};
 

@@ -234,6 +234,10 @@ bool acc::ADFacadeMgr::SetCache(const SessionId &id, uint16 isCache)
 	return con->Send(CMD_REQ_CACHE_MSG, req);
 }
 
+const Session *acc::ADFacadeMgr::FindSession(const SessionId &id)
+{
+	return m_con_mgr.FindSession(id);
+}
 
 void acc::ADFacadeMgr::OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id)
 {
