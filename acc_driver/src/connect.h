@@ -90,6 +90,7 @@ namespace acc {
 		bool IsVerify() const { return m_is_verify_svr; }
 		ADClientCon *FindADClientCon(const SessionId &id) const;
 		const Session *FindSession(const SessionId &id) const;
+		const Session *FindSessionByCid(uint64 cid) const;
 		void SetRegResult(bool is_success);
 		void SetAccSeting(const MsgAccSeting &seting);
 		const MsgAccSeting *GetMsgAccSeting() const { return m_seting.get(); }

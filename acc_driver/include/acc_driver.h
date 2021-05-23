@@ -128,9 +128,10 @@ namespace acc {
 	
 		//请求设置 svr_grp_id 中 激活的 svr_id
 		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
-		bool SetCache(const SessionId &id, uint16 isCache);
+		bool SetCache(const SessionId &id, bool isCache);
 		const Session *FindSession(const SessionId &id);
-
+		//根据cid查找， 单个acc才有效。
+		const Session *FindSessionByCid(uint64 cid);
 
 	public:
 		//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。

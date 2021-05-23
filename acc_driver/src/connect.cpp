@@ -389,6 +389,18 @@ const acc::Session * acc::ConMgr::FindSession(const SessionId &id) const
 	return con->FindSession(id);
 }
 
+
+const acc::Session * acc::ConMgr::FindSessionByCid(uint64 cid) const
+{
+	if (m_vec_con.size() != 1)
+	{
+		L_ERROR("can't find session. m_vec_con.size() must be 1"); //单个acc才有效
+		return nullptr;
+	}
+	ADClientCon *con = m_vec_con[0];
+	return con->FindSession(id);
+}
+
 void acc::ConMgr::SetRegResult(bool is_success)
 {
 	if (!is_success)

@@ -217,7 +217,7 @@ bool acc::ADFacadeMgr::SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 
 	return con->Send(CMD_REQ_SET_ACTIVE_SVR, req);
 }
 
-bool acc::ADFacadeMgr::SetCache(const SessionId &id, uint16 isCache)
+bool acc::ADFacadeMgr::SetCache(const SessionId &id, bool isCache)
 {
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
@@ -237,6 +237,11 @@ bool acc::ADFacadeMgr::SetCache(const SessionId &id, uint16 isCache)
 const Session *acc::ADFacadeMgr::FindSession(const SessionId &id)
 {
 	return m_con_mgr.FindSession(id);
+}
+
+const acc::Session * acc::ADFacadeMgr::FindSessionByCid(uint64 cid)
+{
+	return m_con_mgr.FindSessionByCid(cid);
 }
 
 void acc::ADFacadeMgr::OnSetActiveSvr(const Session &session, uint16 grpId, uint16 svr_id)
