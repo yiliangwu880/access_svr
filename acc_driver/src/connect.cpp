@@ -284,12 +284,7 @@ bool acc::SessionId::operator<(const SessionId &a) const
 	return cid < a.cid;
 }
 
-acc::Session::Session()
-	:remote_port(0)
-	,uin(0)
-{
 
-}
 
 acc::ConMgr::ConMgr(ADFacadeMgr &facade)
 	:m_facade(facade)

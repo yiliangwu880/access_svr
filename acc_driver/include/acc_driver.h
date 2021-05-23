@@ -44,20 +44,29 @@ namespace acc {
 		uint32 acc_id=0; // acc id。 单个svr范围内的有效, 等于ConMgr::m_vec_con 索引. 注意转递给别的svr就不合适用了。可以用addr识别。
 		bool operator<(const SessionId &a) const;
 	};	
-	//session额外自定义信息的抽象.  base session extend
-	struct BaseSnEx
-	{
-		virtual ~BaseSnEx() {};
-	};
+
 	struct Session {
-		Session();
+	private:
+		mutable std::any ex; //session额外自定义信息
+
+	public:
+
 		SessionId id;
 		std::string remote_ip;
-		uint16 remote_port;
+		uint16 remote_port=0;
 		uint64 uin=0; //登录后玩家id， 
 		std::string accName;
-		mutable unique_ptr<BaseSnEx> baseEx;
+
 		void Clear();
+		template<class SnEx>
+		SnEx *GetEx(const Session &sn) const
+		{
+			if (!has_value())
+			{
+				sn->ex = SnEx();
+			}
+			return sn->ex._Cast<SnEx>();
+		}
 	};
 
 	class ConMgr;
@@ -121,26 +130,8 @@ namespace acc {
 		bool SetActiveSvrId(const SessionId &id, uint16 grpId, uint16 svrId);
 		bool SetCache(const SessionId &id, uint16 isCache);
 		const Session *FindSession(const SessionId &id);
-		template<class SnEx>
-		SnEx *FindSessionEx(const SessionId &sid)
-		{
-			const Session *sn = FindSession(sid);
-			L_COND_V(sn);
-			if (!sn->baseEx)
-			{
-				sn->baseEx = make_unique<SnEx>();
-			}
-			return dynamic_cast<SnEx *>(sn->baseEx.get());
-		}
-		template<class SnEx>
-		SnEx *GetSessionEx(const Session &sn)
-		{
-			if (!sn.baseEx)
-			{
-				sn.baseEx = make_unique<SnEx>();
-			}
-			return dynamic_cast<SnEx *>(sn.baseEx.get());
-		}
+
+
 	public:
 		//回调注册结果, 失败就是配置错误了，无法修复。重启进程吧。
 		//@svr_id = 0表示失败
