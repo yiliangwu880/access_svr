@@ -59,13 +59,13 @@ namespace acc {
 
 		void Clear();
 		template<class SnEx>
-		SnEx *GetEx(const Session &sn) const
+		SnEx *GetEx() const
 		{
-			if (!has_value())
+			if (!ex.has_value())
 			{
-				sn->ex = SnEx();
+				ex = SnEx();
 			}
-			return sn->ex._Cast<SnEx>();
+			return ex._Cast<SnEx>();
 		}
 	};
 
