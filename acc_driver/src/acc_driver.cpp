@@ -46,7 +46,7 @@ bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, const VerifyRetStruct &
 	ADClientCon *con = m_con_mgr.FindADClientCon(id);
 	L_COND_F(con);
 	L_COND_F(con->IsReg());
-	L_COND_F(msg);
+	L_COND_F(d.msg);
 
 	MsgReqVerifyRet req;
 	req.cid = id.cid;
@@ -63,6 +63,15 @@ bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, const VerifyRetStruct &
 	string tcp_pack;
 	ASMsg::Serialize(CMD_REQ_VERIFY_RET, as_msg, tcp_pack);
 	return con->SendPack(tcp_pack);
+}
+
+bool acc::ADFacadeMgr::ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len)
+{
+	VerifyRetStruct d;
+	d.cmd = cmd;
+	d.msg = msg;
+	d.msg_len = (uint16)msg_len;
+	return ReqVerifyRet(id, d);
 }
 
 bool acc::ADFacadeMgr::BroadcastUinToSession(const SessionId &id, uint64 uin)

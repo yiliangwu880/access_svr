@@ -22,6 +22,7 @@ main()
 #include <vector>
 #include <unordered_map>
 #include <map>
+#include <any>
 #include "libevent_cpp/include/include_all.h"
 #include "svr_util/include/singleton.h"
 #include "svr_util/include/easy_code.h"
@@ -58,14 +59,16 @@ namespace acc {
 		std::string accName;
 
 		void Clear();
+
 		template<class SnEx>
 		SnEx *GetEx() const
 		{
-			if (!ex.has_value())
-			{
-				ex = SnEx();
-			}
-			return ex._Cast<SnEx>();
+			return nullptr;
+			//if (!ex.has_value())
+			//{
+			//	ex = SnEx();
+			//}
+			//return ex._Cast<SnEx>();
 		}
 	};
 
@@ -75,7 +78,7 @@ namespace acc {
 	{
 		bool is_success = false;
 		uint64 uin = 0;
-		string accName;
+		std::string accName;
 		uint32 cmd = 0;
 		const char *msg;
 		uint16 msg_len = 0;
@@ -106,6 +109,8 @@ namespace acc {
 
 		//请求验证结果. 
 		bool ReqVerifyRet(const SessionId &id, const VerifyRetStruct &d);
+		//等删除，留着让测试代码编译通过
+		bool ReqVerifyRet(const SessionId &id, bool is_success, uint32 cmd, const char *msg, uint16 msg_len);
 
 		//广播uin 一个svr向所有svr的指定会话
 		bool BroadcastUinToSession(const SessionId &id, uint64 uin);

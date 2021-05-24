@@ -46,6 +46,7 @@ namespace acc {
 		virtual void OnDisconnected() override final;
 
 		const Session *FindSession(const SessionId &id);
+		const Session *FindSessionByCid(uint64 cid);
 		//发送 acc::ASMsg
 		bool Send(const acc::ASMsg &as_data);
 		bool Send(acc::Cmd as_cmd, const std::string &as_msg);

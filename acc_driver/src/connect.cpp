@@ -89,6 +89,16 @@ const acc::Session *acc::ADClientCon::FindSession(const SessionId &id)
 	return &(it->second);
 }
 
+const acc::Session * acc::ADClientCon::FindSessionByCid(uint64 cid)
+{
+	auto it = m_id_2_s.find(cid);
+	if (it == m_id_2_s.end())
+	{
+		return nullptr;
+	}
+	return &(it->second);
+}
+
 bool acc::ADClientCon::Send(const acc::ASMsg &as_data)
 {
 	std::string tcp_pack;
@@ -136,7 +146,7 @@ void acc::ADClientCon::HandleCreateSession(const ASMsg &msg)
 	bool r = pair.second;
 	if (!r)
 	{
-		L_ERROR("create session fail, repeated insert id. cid=%lld acc_id=%d", s.id.cid, s.id.acc_id);
+		L_ERROR("create session fail, repeated insert id. cid=%lld acc_id=%d", rsp.cid, m_acc_id);
 		return;
 	}
 	Session &s = (pair.first->second);
@@ -398,7 +408,7 @@ const acc::Session * acc::ConMgr::FindSessionByCid(uint64 cid) const
 		return nullptr;
 	}
 	ADClientCon *con = m_vec_con[0];
-	return con->FindSession(id);
+	return con->FindSessionByCid(cid);
 }
 
 void acc::ConMgr::SetRegResult(bool is_success)
