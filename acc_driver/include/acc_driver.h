@@ -63,14 +63,15 @@ namespace acc {
 		template<class SnEx>
 		SnEx *GetEx() const
 		{
-			return nullptr;
-			//if (!ex.has_value())
-			//{
-			//	ex = SnEx();
-			//}
-			//return ex._Cast<SnEx>();
+			if (!ex.has_value())
+			{
+				ex = SnEx();
+			}
+		
+			return std::any_cast<SnEx>(&ex);
 		}
 	};
+	using CSession = const Session;
 
 	class ConMgr;
 
