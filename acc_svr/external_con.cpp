@@ -11,6 +11,7 @@ ExternalSvrCon::ExternalSvrCon()
 	:m_state(State::INIT)
 	, m_uin(0)
 {
+	SetRawReadCb(true);
 	if (0 != CfgMgr::Ins().GetMsbs())
 	{
 		SetMaxSendBufSize(CfgMgr::Ins().GetMsbs());
@@ -87,17 +88,175 @@ void ExternalSvrCon::SetCache(bool isCache)
 	{
 		for (std::string &str : m_cacheMsg)
 		{
-			lc::MsgPack msg; //待优化，减少copy
-			msg.len = str.length();
-			memcpy(msg.data, str.c_str(), str.length());
-			Forward2Svr(msg);
+			Forward2Svr(str.c_str(), str.length());
 		}
 		m_cacheMsg.clear();
 	}
 	m_isCache = isCache;
 }
 
-void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
+
+//true 表示 buffer 从4字节读取seed成功 or packetId == 0xEF .
+//@cur [in]解包来源内存地址，[out]第一个未解包的内存地址（下个变量解包的内存地址）。
+//@len [in]cur有效长度，[out]解包后，cur未使用字节长度
+bool ExternalSvrCon::HandleSeed(CPointChar &cur, int &len)
+{
+	if (cur[0] == 0xEF)
+	{
+		// new packet in client	6.0.5.0	replaces the traditional seed method with a	seed packet
+		// 0xEF	= 239 =	multicast IP, so this should never appear in a normal seed.	 So	this is	backwards compatible with older	clients.
+		Seeded = true;
+		return true;
+	}
+
+	if (len >= 4)
+	{
+		const char * m_Peek = cur;
+
+		//buffer.Dequeue(m_Peek, 0, 4);
+
+		uint32 seed = (uint32)((m_Peek[0] << 24) | (m_Peek[1] << 16) | (m_Peek[2] << 8) | m_Peek[3]);
+		len -= 4;
+		if (seed == 0)
+		{
+			L_ERROR("Login: {0}: Invalid Client");
+			DisConnect();
+			return false;
+		}
+
+		Seed = seed;
+		Seeded = true;
+		return true;
+	}
+
+	return false;
+}
+
+
+bool ExternalSvrCon::CheckEncrypted(int packetID)
+{
+	bool SentFirstPacket = m_state == State::VERIFYED;
+	if (!SentFirstPacket && packetID != 0xF0 && packetID != 0xF1 && packetID != 0xCF && packetID != 0x80 &&
+		packetID != 0x91 && packetID != 0xA4 && packetID != 0xEF && packetID != 0xE4 && packetID != 0xFF)
+	{
+		L_ERROR("Client: {0}: Encrypted Client Unsupported");
+		DisConnect();
+		return true;
+	}
+
+	return false;
+}
+namespace {
+
+int GetPacketLength(const char *pMsg, int len)
+{
+	if (len >= 3)
+	{
+		return (pMsg[1] << 8) | pMsg[2];
+	}
+
+	return 0;
+}
+
+}
+//@param pMsg, len  网络缓存字节
+//return 返回包字节数， 0表示包未接收完整。
+int ExternalSvrCon::ParsePacket(const char *pMsg, int len)
+{
+//##接收包格式
+//	前4字节  --seed 作用？
+//		[0] --packetId ，如果包长度固定，通过id 查找 包长度
+//		[1, 2] --如果可变长度包，这里存放包长度。
+//		后面接其他消息内容。 索引从 1或者3（可变长度包）开始
+//抄UO  HandleReceive 函数
+
+	//ByteQueue buffer = ns.Buffer;
+
+	if (pMsg == nullptr || len <= 0)
+	{
+		L_ERROR("unknow");
+		return 0;
+	}
+
+	
+		if (!Seeded && !HandleSeed(pMsg, len))
+		{
+			L_INFO("read seed fail");
+			return 0;
+		}
+
+		int length = len; //int length = buffer.Length;
+
+		while (length > 0 )
+		{
+			int packetID = pMsg[0];
+
+			if (CheckEncrypted(packetID))
+			{
+				return 0;//Encrypted Client Unsupported
+			}
+
+			//todo
+			//PacketHandler handler = ns.GetHandler(packetID);
+
+			//if (handler == null)
+			//{
+			//	L_ERROR("find Handler Fail. %d", packetID);
+			//	return 0;
+			//}
+
+			//int packetLength = handler.Length;
+			int packetLength = 0;
+			if (packetLength <= 0)
+			{
+				if (length >= 3)
+				{
+					packetLength = GetPacketLength(pMsg,len);
+
+					if (packetLength < 3)
+					{
+						L_ERROR("packetLength < 3");
+						DisConnect();
+						return 0;
+					}
+				}
+				else
+				{
+					return 0;
+				}
+			}
+
+			if (length < packetLength)
+			{
+				return 0;
+			}
+
+			return packetLength;
+
+		}
+	
+
+	return 0;
+}
+int ExternalSvrCon::OnRawRecv(const char *pMsg, int len)
+{
+	int totalGetLen = 0;
+	for (;;)
+	{
+		//分割每个包，交给后续RevPacket处理
+		int packetLen = ParsePacket(pMsg, len);
+		if (packetLen == 0)//未接收完整
+		{
+			return totalGetLen;
+		}
+		RevPacket(pMsg, packetLen);
+		totalGetLen += packetLen;
+		pMsg += packetLen;
+		len -= packetLen;
+	}
+}
+
+void ExternalSvrCon::RevPacket(const char *pMsg, int len)
 {
 	switch (m_state)
 	{
@@ -105,7 +264,7 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 		L_ERROR("unknow state %d", (int)m_state);
 		break;
 	case ExternalSvrCon::State::INIT:
-		Forward2VerifySvr(msg);
+		Forward2VerifySvr(pMsg, len);
 		break;
 	case ExternalSvrCon::State::WAIT_VERIFY:
 		L_WARN("client repeated req verify, ignore");
@@ -114,12 +273,17 @@ void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
 		if (m_isCache)
 		{
 			L_DEBUG("cache msg");
-			m_cacheMsg.emplace_back(msg.data, msg.len);
+			m_cacheMsg.emplace_back(pMsg, len);
 		}
-		Forward2Svr(msg);
+		Forward2Svr(pMsg, len);
 		break;
 	}
 	return;
+}
+
+void ExternalSvrCon::OnRecv(const lc::MsgPack &msg)
+{
+	L_ERROR("unuse");
 }
 
 void ExternalSvrCon::OnConnected()
@@ -157,7 +321,19 @@ bool ExternalSvrCon::ClientTcpPack2MsgForward(const lc::MsgPack &msg, MsgForward
 	return true;
 }
 
-void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
+//client 接收的tcp pack 转 MsgForward
+//uo网络格式，其他 游戏需要修改
+bool ExternalSvrCon::ClientTcpPack2MsgForward(const char *pMsg, int len, acc::MsgForward &f_msg) const
+{
+	L_COND_F(len >= (int)sizeof(f_msg.cmd));
+	f_msg.cid = GetId();
+	f_msg.cmd = *(char*)(pMsg);
+	f_msg.msg = pMsg;
+	f_msg.msg_len = len ;
+	return true;
+}
+
+void ExternalSvrCon::Forward2VerifySvr(const char *pMsg, int len)
 {
 	L_COND(State::INIT == m_state);
 
@@ -166,7 +342,7 @@ void ExternalSvrCon::Forward2VerifySvr(const lc::MsgPack &msg)
 	{//client tcp pack to ASData tcp pack 
 		MsgForward f_msg;
 		//L_DEBUG("msg.data first 32bit = %x", *(uint32*)msg.data);
-		if (!ClientTcpPack2MsgForward(msg, f_msg))
+		if (!ClientTcpPack2MsgForward(pMsg, len, f_msg))
 		{
 			L_WARN("client illegal msg");
 			return;
@@ -204,10 +380,10 @@ void ExternalSvrCon::OnHeartbeatTimeOut()
 	DisConnect();
 }
 
-void ExternalSvrCon::Forward2Svr(const lc::MsgPack &msg)
+void ExternalSvrCon::Forward2Svr(const char *pMsg, int len)
 {
 	MsgForward f_msg;
-	if (!ClientTcpPack2MsgForward(msg, f_msg))
+	if (!ClientTcpPack2MsgForward(pMsg, len, f_msg))
 	{
 		L_WARN("client illegal msg");
 		return;

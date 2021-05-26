@@ -30,7 +30,7 @@ extern AccSeting *g_AccSeting;
 //连接外网client的sever connect
 class ExternalSvrCon : public lc::SvrCon
 {
-
+	using CPointChar = const char *;
 	using MainCmd2GrpId = std::unordered_map<uint16, GroupData>;
 private:
 	static const uint64 VERIFY_TIME_OUT_SEC = 10;
@@ -50,6 +50,10 @@ private:
 	uint64 m_uin;                   //玩家标识
 	bool m_isCache = false;			//true 表示缓存消息，暂停转发。
 	std::vector<std::string> m_cacheMsg;
+
+	//uo 特有
+	uint32 Seed = 0;
+	bool Seeded = false;
 public:
 	ExternalSvrCon();
 	~ExternalSvrCon();
@@ -62,14 +66,24 @@ public:
 	uint64 GetUin()const { return m_uin; }
 	void SetUin(uint64 uin) { m_uin = uin; }
 private:
-	virtual void OnRecv(const lc::MsgPack &msg) override;
+	//@param pMsg, len  网络缓存字节
+	//return 返回已经读取的字节数
+	virtual int OnRawRecv(const char *pMsg, int len) override;
 	virtual void OnConnected() override;
-
+	virtual void OnRecv(const lc::MsgPack &msg)override;
 private:
+	//@param pMsg, len  网络缓存字节
+	//return 返回包字节数， 0表示包未接收完整。
+	int ParsePacket(const char *pMsg, int len);
+	void RevPacket(const char *pMsg, int len);
 	bool ClientTcpPack2MsgForward(const lc::MsgPack &msg, acc::MsgForward &f_msg) const;
-	void Forward2VerifySvr(const lc::MsgPack &msg);
-	void Forward2Svr(const lc::MsgPack &msg);
+	bool ClientTcpPack2MsgForward(const char *pMsg, int len, acc::MsgForward &f_msg) const;
+	void Forward2VerifySvr(const char *pMsg, int len);
+	void Forward2Svr(const char *pMsg, int len);
 	void OnWaitFirstMsgTimeOut();
 	void OnVerfiyTimeOut();
 	void OnHeartbeatTimeOut();
+
+	bool HandleSeed(CPointChar &cur, int &len);
+	bool CheckEncrypted(int packetID);
 };
